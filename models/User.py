@@ -1,7 +1,13 @@
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field,EmailStr
 
 # מודל לקבלת נתוני משתמש מה-Frontend בזמן הרשמה או התחברות
 class UserCreate(BaseModel):
-    username: str = Field(..., min_length=3, description="שם המשתמש חייב להכיל לפחות 3 תווים")
+    username: str = Field(..., min_length=2, description="שם המשתמש חייב להכיל לפחות 2 תווים")
     password: str = Field(..., min_length=6, description="הסיסמה חייבת להכיל לפחות 6 תווים")
+    email : EmailStr
+
+class userlogin (BaseModel):
+    username: str = Field(..., min_length=2, description="שם המשתמש חייב להכיל לפחות 2 תווים")
+    password: str = Field(..., min_length=6, description="הסיסמה חייבת להכיל לפחות 6 תווים")
+    
