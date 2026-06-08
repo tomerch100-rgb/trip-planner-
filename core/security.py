@@ -13,10 +13,8 @@ safe = HTTPBearer()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 
-def hash_password (password)  :# 1. כשמשתמש נרשם (מייצרים Hash)
-# צריך להפוך את הסיסמה ל-bytes
+def hash_password (password)  :
     bytes_password = password.encode('utf-8')
-# יוצרים salt ומצפינים
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(bytes_password, salt)
     return hashed.decode()
@@ -26,7 +24,7 @@ def verify_password (stored_hash,check_password) :
     bytes_password =check_password.encode('utf-8')
     return bcrypt.checkpw(bytes_password,bytes_hash)
       
-def creat_token (user_id) :
+def create_token (user_id) :
     expire_time = datetime.now(timezone.utc) + timedelta(minutes=30)       
     payload = {
         "sub" : str(user_id),
