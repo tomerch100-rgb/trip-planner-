@@ -30,3 +30,17 @@ def authenticate_user(db: Session, user_login: schemas.UserLogin):
         return None
         
     return user
+
+
+def create_trip(db: Session, trip: schemas.TripCreate, user_id: int):
+    new_trip =  models.Trip (
+        destination=trip.destination,
+        start_date=trip.start_date,
+        end_date=trip.end_date,
+        user_id=user_id  
+    )
+    db.add(new_trip)
+    db.commit()
+    db.refresh(new_trip)
+    
+    return new_trip

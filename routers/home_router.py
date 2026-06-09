@@ -4,8 +4,6 @@ from classes.models import User
 from core import security 
 router = APIRouter()
 
-
-
-@app.get("/")
+@router.get("/")
 def home():
-    return {"message": "welcome to tomer's trip_planners"}
+    return {"message": "welcome to tomer&tomer trip_planners"}
