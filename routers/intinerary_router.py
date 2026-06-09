@@ -31,3 +31,12 @@ def get_trip_itinerary(
         return [] # מחזירים רשימה ריקה אם אין עדיין לו"ז
         
     return itinerary
+
+@router.get("/{trip_id}/budget")
+def get_itinerary_budget(
+    trip_id: int, 
+    db: Session = Depends(get_db), 
+    user_id: int = Depends(security.get_current_user_id)
+):
+    total_cost = crud.get_trip_total_cost(db=db, trip_id=trip_id)
+    return {"trip_id": trip_id, "total_planned_cost": total_cost}

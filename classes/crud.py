@@ -1,4 +1,5 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session 
+from sqlalchemy.sql import func
 import classes.models as models
 import classes.schemas as schemas
 from core import security 
@@ -106,3 +107,22 @@ def get_trip_itinerary(db: Session, trip_id: int):
         models.TripItinerary.visit_date, 
         models.TripItinerary.start_time
     ).all()
+
+def get_trip(db: Session, trip_id: int, user_id: int):
+    """
+    שולף טיול ספציפי ומוודא שהוא אכן שייך למשתמש שביקש אותו
+    """
+    return db.query(models.Trip).filter(
+        models.Trip.id == trip_id, 
+        models.Trip.user_id == user_id
+    ).first()
+
+def get_trip_total_cost(db: Session, trip_id: int):
+    # מבקש מהדאטה-בייס לסכום את עמודת המחיר של כל האטרקציות בטיול הזה
+    total = db.query(func.sum(models.TripItinerary.actual_price)).filter(
+        models.TripItinerary.trip_id == trip_id
+    ).scalar()
+    # אם הלוז ריק, הפונקציה תחזיר None, אז נוודא שמחזירים 0.0
+    if total is None :
+        return 0.0
+    return total

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends,  status
+from fastapi import APIRouter, Depends,  status,HTTPException
 from sqlalchemy.orm import Session
 from   classes  import schemas
 from DB.db import get_db
@@ -25,3 +25,17 @@ def read_user_trips(
 ):
     trips = crud.get_user_trips(db=db, user_id=user_id)
     return trips
+
+@router.get("/{trip_id}", response_model=schemas.TripResponse)
+def read_single_trip(
+    trip_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id)
+):
+    # קוראים לפונקציה מה-CRUD במקום לכתוב פה שאילתות
+    trip = crud.get_trip(db=db, trip_id=trip_id, user_id=user_id)
+    
+    if not trip:
+        raise HTTPException(status_code=404, detail="הטיול לא נמצא או שאין לך הרשאה לצפות בו")
+        
+    return trip
