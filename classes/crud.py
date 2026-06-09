@@ -44,3 +44,6 @@ def create_trip(db: Session, trip: schemas.TripCreate, user_id: int):
     db.refresh(new_trip)
     
     return new_trip
+
+def get_user_trips(db: Session, user_id: int):
+    return db.query(models.Trip).filter(models.Trip.user_id == user_id).all()

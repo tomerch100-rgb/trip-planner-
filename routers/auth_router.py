@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from classes import schemas
-import crud
+import classes.crud as crud
 from core import security
 from DB.db import get_db
 
