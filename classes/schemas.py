@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr,ConfigDict
 from typing import List, Optional
 from datetime import date, time, datetime
 
@@ -55,3 +55,9 @@ class ItineraryResponse(ItineraryCreate):
 
     class Config:
         from_attributes = True
+
+class CategoryResponse(BaseModel):
+    id: int
+    name: str
+    
+    model_config = ConfigDict(from_attributes=True)

@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime,Date, ForeignKey,Numeric
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from DB.db import Base
 
@@ -38,3 +39,31 @@ class Attraction(Base):
     name = Column(String(100), nullable=False)
     address = Column(String(255), nullable=False)
     default_price = Column(Numeric(10, 2), default=0.00)    
+    
+    city_id = Column(Integer, ForeignKey("cities.id", ondelete="RESTRICT"), nullable=False)
+    # 2. הקשר הדו-כיווני שחסר לך עכשיו ומכשיל את הריצה!
+    city = relationship("City", back_populates="attractions")
+
+class Country(Base):
+    __tablename__ = "countries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False)
+    country_code = Column(String(3), unique=True, nullable=False)
+
+    # קשר לערים: למדינה אחת יש הרבה ערים
+    cities = relationship("City", back_populates="country", cascade="all, delete-orphan")
+
+
+
+class City(Base):
+    __tablename__ = "cities"
+
+    id = Column(Integer, primary_key=True, index=True)
+    country_id = Column(Integer, ForeignKey("countries.id", ondelete="RESTRICT"), nullable=False)
+    name = Column(String(100), nullable=False)
+    timezone = Column(String(50), nullable=True)
+
+    # קשרי גומלין לוגיים (Relationships)
+    country = relationship("Country", back_populates="cities")
+    attractions = relationship("Attraction", back_populates="city", cascade="all, delete-orphan")
