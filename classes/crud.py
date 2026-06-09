@@ -33,8 +33,8 @@ def authenticate_user(db: Session, user_login: schemas.UserLogin):
 
 
 def create_trip(db: Session, trip: schemas.TripCreate, user_id: int):
-    new_trip =  models.Trip (
-        destination=trip.destination,
+    new_trip = models.Trip(
+        city_id=trip.city_id, 
         start_date=trip.start_date,
         end_date=trip.end_date,
         user_id=user_id  
@@ -47,3 +47,19 @@ def create_trip(db: Session, trip: schemas.TripCreate, user_id: int):
 
 def get_user_trips(db: Session, user_id: int):
     return db.query(models.Trip).filter(models.Trip.user_id == user_id).all()
+
+
+
+def get_attractions_by_city(db: Session, city_id: int):
+
+    return db.query(models.Attraction).filter(models.Attraction.city_id == city_id).all()
+
+
+
+def get_attractions_by_category(db: Session, city_id: int, category_id: int):
+
+    return db.query(models.Attraction).filter(
+        models.Attraction.city_id == city_id,
+        models.Attraction.category_id == category_id
+    ).all()
+
