@@ -81,7 +81,6 @@ def add_bulk_itinerary(db: Session, items: List[schemas.ItineraryCreate]):
             # בודקים אם זה באותו יום
             if new_item.visit_date == existing.visit_date:
                 # בודקים אם הטווחים חופפים:
-                # (StartA < EndB) AND (EndA > StartB)
                 if new_item.start_time < existing.end_time and new_item.end_time > existing.start_time:
                     raise HTTPException (
                         status_code=400, 
