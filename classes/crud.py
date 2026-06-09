@@ -2,6 +2,9 @@ from sqlalchemy.orm import Session
 import classes.models as models
 import classes.schemas as schemas
 from core import security 
+from typing import List
+from fastapi import HTTPException
+
 
 def get_user_by_email(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
@@ -63,3 +66,44 @@ def get_attractions_by_category(db: Session, city_id: int, category_id: int):
         models.Attraction.category_id == category_id
     ).all()
 
+# פונקציות ניהול לו"ז יומי ()
+
+def add_bulk_itinerary(db: Session, items: List[schemas.ItineraryCreate]):
+    # 1. שליפת כל הלו"ז הקיים לאותו טיול כדי לבדוק התנגשויות
+    trip_id = items[0].trip_id
+    existing_items = db.query(models.TripItinerary).filter(
+        models.TripItinerary.trip_id == trip_id
+    ).all()
+    
+    # 2. בדיקת התנגשויות
+    for new_item in items:
+        for existing in existing_items:
+            # בודקים אם זה באותו יום
+            if new_item.visit_date == existing.visit_date:
+                # בודקים אם הטווחים חופפים:
+                # (StartA < EndB) AND (EndA > StartB)
+                if new_item.start_time < existing.end_time and new_item.end_time > existing.start_time:
+                    raise HTTPException (
+                        status_code=400, 
+                        detail=f"התנגשות בשעות: ביום {new_item.visit_date} האטרקציה חופפת ללוז"
+                    )
+
+    # 3. אם הכל תקין, מכניסים את הכל
+    itinerary_items = [models.TripItinerary(**item.dict()) for item in items]
+    db.bulk_save_objects(itinerary_items)
+    db.commit()
+    return itinerary_items
+    
+
+def get_trip_itinerary(db: Session, trip_id: int):
+    """
+    שולף את כל הלו"ז של טיול ספציפי.
+    הקסם פה הוא ה-order_by: ה-SQL מסדר לנו את התוצאות כרונולוגית 
+    לפי תאריך ואז לפי שעת התחלה, ככה שה-Frontend מקבל את זה מוכן להצגה!
+    """
+    return db.query(models.TripItinerary).filter(
+        models.TripItinerary.trip_id == trip_id
+    ).order_by(
+        models.TripItinerary.visit_date, 
+        models.TripItinerary.start_time
+    ).all()

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from core import security
 
 # ייבוא פונקציית החיבור למסד הנתונים
 from DB.db import get_db 
@@ -16,12 +17,12 @@ from services.google_places import fetch_attractions_from_google
 
 # הגדרת הראוטר עם קידומת ונציגות ב-Swagger Docs
 router = APIRouter(
-    prefix="/attractions",
     tags=["Attractions"]
 )
 
 @router.get("/categories", response_model=List[CategoryResponse])
-def get_all_categories(db: Session = Depends(get_db)):
+def get_all_categories(db: Session = Depends(get_db),    user_id: int = Depends( security.get_current_user_id)  
+):
     """
     שולף את כל קטגוריות האטרקציות הקיימות במסד הנתונים.
     משמש לבניית תפריטי סינון (Dropdowns) או כפתורים ב-Frontend.
@@ -33,7 +34,9 @@ def get_all_categories(db: Session = Depends(get_db)):
 def get_attractions(
     city_id: Optional[int] = Query(None, description="סינון לפי מזהה עיר מתוך מסד הנתונים מקומי"),
     category_id: Optional[int] = Query(None, description="סינון לפי מזהה קטגוריה מתוך מסד הנתונים המקומי"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends( security.get_current_user_id)  
+
 ):
     """
     שולף אטרקציות השמורות במסד הנתונים המקומי (PostgreSQL).
@@ -56,7 +59,10 @@ def get_attractions(
 def explore_live_attractions(
     city_id: int = Query(..., description="מזהה העיר מתוך מסד הנתונים שלנו"),
     category_name: str = Query(..., description="שם הקטגוריה באנגלית לחיפוש בגוגל (למשל: Museums, Parks, Restaurants)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db) ,
+    user_id: int = Depends( security.get_current_user_id)  
+
+   
 ):
     """
     נתיב מתקדם: חיפוש אטרקציות בזמן אמת מול Google Places API.

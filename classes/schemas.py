@@ -61,3 +61,6 @@ class CategoryResponse(BaseModel):
     name: str
     
     model_config = ConfigDict(from_attributes=True)
+
+class BulkItineraryCreate(BaseModel):
+    items: List[ItineraryCreate] # רשימה של כל מה שהמשתמש שיבץ בלו"ז    

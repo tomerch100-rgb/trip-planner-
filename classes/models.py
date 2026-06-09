@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime,Date, ForeignKey,Numeric
+from sqlalchemy import Column, Integer, String, DateTime,Date, ForeignKey,Numeric,Time
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from DB.db import Base
@@ -20,6 +20,7 @@ class Trip(Base):
     start_date = Column(Date)
     end_date = Column(Date)
     user_id = Column(Integer, ForeignKey("users.user_id"))
+    itinerary = relationship("TripItinerary", back_populates="trip", cascade="all, delete-orphan")
 
 
 class AttractionCategory(Base):
@@ -67,3 +68,23 @@ class City(Base):
     # קשרי גומלין לוגיים (Relationships)
     country = relationship("Country", back_populates="cities")
     attractions = relationship("Attraction", back_populates="city", cascade="all, delete-orphan")
+
+class TripItinerary(Base):
+    __tablename__ = "trip_itinerary"
+
+    id = Column(Integer, primary_key=True, index=True)
+    trip_id = Column(Integer, ForeignKey("trips.id", ondelete="CASCADE"), nullable=False)
+    attraction_id = Column(Integer, ForeignKey("attractions.id", ondelete="CASCADE"), nullable=False)
+    # תאריך ושעות הביקור
+    visit_date = Column(Date, nullable=False)
+    start_time = Column(Time, nullable=False)
+    end_time = Column(Time, nullable=False)
+    
+    actual_price = Column(Numeric(10, 2), default=0.00)
+    next_recommended_attraction_id = Column(Integer, ForeignKey("attractions.id", ondelete="SET NULL"), nullable=True)
+    # --- קשרי גומלין (Relationships) ---
+    # זה מה שיאפשר לנו לעשות itinerary.attraction.name ולקבל "הלובר" מיד!
+    trip = relationship("Trip", back_populates="itinerary")
+    
+    # אומר ל-SQLAlchemy איך לשלוף את פרטי האטרקציה ששובצה
+    attraction = relationship("Attraction", foreign_keys=[attraction_id])
