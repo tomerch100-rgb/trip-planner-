@@ -21,7 +21,7 @@ class TripCreate(BaseModel):
 class TripResponse(TripCreate):
     id: int
     user_id: int
-    created_at: datetime
+   # created_at: datetime
 
     class Config:
         from_attributes = True
@@ -32,10 +32,12 @@ class AttractionCreate(BaseModel):
     name: str = Field(..., min_length=2)
     address: str
     default_price: Optional[float] = 0.0
+    latitude: Optional[float] = Field(None, description="קואורדינטת קו רוחב")
+    longitude: Optional[float] = Field(None, description="קואורדינטת קו אורך")
 
 class AttractionResponse(AttractionCreate):
     id: int
-    city_id: int
+    city_id: int | None = None
 
     class Config:
         from_attributes = True

@@ -40,9 +40,8 @@ class Attraction(Base):
     address = Column(String(255), nullable=False)
     default_price = Column(Numeric(10, 2), default=0.00)    
     city_id = Column(Integer, ForeignKey("cities.id", ondelete="RESTRICT"), nullable=False)
-    latitude = Column(Numeric(10, 8), nullable=True, description="קו רוחב עבור המפה")
-    longitude = Column(Numeric(11, 8), nullable=True, description="קו אורך עבור המפה")
-    # 2. הקשר הדו-כיווני שחסר לך עכשיו ומכשיל את הריצה!
+    latitude = Column(Numeric(10, 8), nullable=True)
+    longitude = Column(Numeric(11, 8), nullable=True)
     city = relationship("City", back_populates="attractions")
 
 class Country(Base):

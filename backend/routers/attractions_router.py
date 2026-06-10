@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from core import security
-# ייבוא פונקציית החיבור למסד הנתונים
-from DB.db import get_db 
+from backend.classes import schemas
+from backend.core import security
+from backend.DB.db import get_db 
 # ייבוא מודלי ה-ORM (מסד הנתונים)
 from backend.classes.models import Attraction, AttractionCategory, City
 # ייבוא מודלי ה-Pydantic (וולידציה ו-JSON)
 from backend.classes.schemas import AttractionResponse, CategoryResponse
 # ייבוא השירות החיצוני של גוגל
-from services.google_places import fetch_attractions_from_google
+from backend.services.google_places import fetch_attractions_from_google
 
 # הגדרת הראוטר עם קידומת ונציגות ב-Swagger Docs
 router = APIRouter(
@@ -84,3 +84,15 @@ def explore_live_attractions(
         "total_results": len(google_results),
         "attractions": google_results
     }
+
+@router.post("/", response_model=AttractionResponse, status_code=201)
+def create_attraction(
+    attraction: schemas.AttractionCreate,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(security.get_current_user_id)
+):
+    new_attraction = Attraction(**attraction.model_dump())
+    db.add(new_attraction)
+    db.commit()
+    db.refresh(new_attraction)
+    return new_attraction
