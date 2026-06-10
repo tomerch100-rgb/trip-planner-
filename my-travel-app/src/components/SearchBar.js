@@ -10,11 +10,14 @@ const SearchBar = ({ onSearchResults }) => {
   const [loading, setLoading] = useState(false);
 
   // 1. שליפת מדינות בטעינת הקומפוננטה
-  useEffect(() => {
-    geographyAPI.getCountries()
-      .then(res => setCountries(res.data))
-      .catch(err => console.error("Error fetching countries:", err));
-  }, []);
+useEffect(() => {
+  geographyAPI.getCountries()
+    .then(res => {
+      console.log("Countries:", res.data);
+      setCountries(res.data);
+    })
+    .catch(err => console.error("Error fetching countries:", err));
+}, []);
 
   // 2. האזנה לבחירת מדינה ושליפת הערים המתאימות לה בלבד
   useEffect(() => {
@@ -31,6 +34,7 @@ const SearchBar = ({ onSearchResults }) => {
   // 3. הגשת הטופס וביצוע החיפוש החי (Proxy מול גוגל)
   const handleSearch = async (e) => {
     e.preventDefault();
+    console.log("countries state:", countries);
     if (!selectedCity) return;
     
     setLoading(true);
