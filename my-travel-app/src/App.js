@@ -1,8 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import SearchBar from './components/SearchBar';
+import { AuthContext } from './context/AuthContext'; // מחקנו את שורת ה-import הכפולה שהייתה מעל
+import LoginForm from './components/LoginForm';
+import RegisterForm from './components/RegisterForm';
 
 function App() {
   const [attractions, setAttractions] = useState([]);
+  const { user } = useContext(AuthContext);
+  const [authMode, setAuthMode] = useState('login');
+
+  if (!user) {
+    return authMode === 'login' ? (
+      <LoginForm onSwitchToRegister={() => setAuthMode('register')} />
+    ) : (
+      <RegisterForm onSwitchToLogin={() => setAuthMode('login')} />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8" dir="rtl">
