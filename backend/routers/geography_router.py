@@ -7,7 +7,7 @@ from backend.classes.models import Country, City
 from backend.classes.schemas import CountryResponse, CityGeographyResponse
 
 router = APIRouter(
-    prefix="/geography",
+   
     tags=["Geography"]
 )
 
