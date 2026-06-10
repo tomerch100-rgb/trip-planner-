@@ -1,45 +1,35 @@
-// src/services/api.js
-const API_BASE_URL = 'http://localhost:8000'; // וודא שזה תואם לפורט של ה-FastAPI שלך
+import axios from 'axios';
 
-export const getCities = async () => {
-  const response = await fetch(`${API_BASE_URL}/cities/`);
-  return await response.json();
-};
-// src/components/SearchBar.js
-import React, { useState, useEffect } from 'react';
-import { getCities } from '../services/api';
+// יצירת אינסטנס של Axios עם כתובת השרת שלך
+const API = axios.create({
+  baseURL: 'http://localhost:8000', // שנה לפורט המדויק של ה-FastAPI שלך
+});
 
-const SearchBar = () => {
-  const [cities, setCities] = useState([]);
+// Interceptor להוספת טוקן ה-JWT אוטומטית לכל בקשה יוצאת
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-  useEffect(() => {
-    getCities().then(data => setCities(data));
-  }, []);
-
-  return (
-    <div className="flex gap-4 p-6 bg-gray-100 rounded-lg shadow-sm">
-      <select className="p-2 border rounded">
-        <option>בחר עיר</option>
-        {cities.map(city => (
-          <option key={city.id} value={city.id}>{city.name}</option>
-        ))}
-      </select>
-      {/* בהמשך נוסיף כאן את הקטגוריות */}
-    </div>
-  );
+// קריאות גיאוגרפיה (Cascading Dropdown)
+export const geographyAPI = {
+  getCountries: () => API.get('/geography/countries'),
+  getCities: (countryId) => API.get(`/geography/countries/${countryId}/cities`),
 };
 
-export default SearchBar;
-// src/App.js
-import SearchBar from './components/SearchBar';
+// קריאות אטרקציות וחיפוש בזמן אמת
+export const attractionsAPI = {
+  exploreLive: (cityId, category) => 
+    API.get('/attractions/explore-live', { params: { city_id: cityId, category } }),
+};
 
-function App() {
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Trip Planner</h1>
-      <SearchBar />
-    </div>
-  );
-}
+// ניהול טיולים ולו"ז
+export const tripsAPI = {
+  getTrips: () => API.get('/trips'),
+  createBulkItinerary: (itineraryData) => API.post('/itinerary/bulk', itineraryData),
+};
 
-export default App;
+export default API;
