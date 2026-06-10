@@ -36,12 +36,12 @@ class Attraction(Base):
     __tablename__ = "attractions"
     id = Column(Integer, primary_key=True, index=True)
     category_id = Column(Integer, ForeignKey("attraction_categories.id"))
-    city_id = Column(Integer, ForeignKey("cities.id")) 
     name = Column(String(100), nullable=False)
     address = Column(String(255), nullable=False)
     default_price = Column(Numeric(10, 2), default=0.00)    
-    
     city_id = Column(Integer, ForeignKey("cities.id", ondelete="RESTRICT"), nullable=False)
+    latitude = Column(Numeric(10, 8), nullable=True, description="קו רוחב עבור המפה")
+    longitude = Column(Numeric(11, 8), nullable=True, description="קו אורך עבור המפה")
     # 2. הקשר הדו-כיווני שחסר לך עכשיו ומכשיל את הריצה!
     city = relationship("City", back_populates="attractions")
 

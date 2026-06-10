@@ -5,7 +5,7 @@ import backend.classes.crud as crud
 from backend.core import security
 from backend.DB.db import get_db
 from typing import List
-router = APIRouter(prefix="/itinerary", tags=["itinerary"])
+router = APIRouter( tags=["itinerary"])
 
 # 1. הוספת הלו"ז (Bulk)
 @router.post("/bulk", status_code=status.HTTP_201_CREATED)

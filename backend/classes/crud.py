@@ -86,9 +86,8 @@ def add_bulk_itinerary(db: Session, items: List[schemas.ItineraryCreate]):
                         status_code=400, 
                         detail=f"התנגשות בשעות: ביום {new_item.visit_date} האטרקציה חופפת ללוז"
                     )
-
     # 3. אם הכל תקין, מכניסים את הכל
-    itinerary_items = [models.TripItinerary(**item.dict()) for item in items]
+    itinerary_items = [models.TripItinerary(**item.model_dump()()) for item in items]
     db.bulk_save_objects(itinerary_items)
     db.commit()
     return itinerary_items

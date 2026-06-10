@@ -2,16 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from core import security
-
 # ייבוא פונקציית החיבור למסד הנתונים
 from DB.db import get_db 
-
 # ייבוא מודלי ה-ORM (מסד הנתונים)
 from backend.classes.models import Attraction, AttractionCategory, City
-
 # ייבוא מודלי ה-Pydantic (וולידציה ו-JSON)
 from backend.classes.schemas import AttractionResponse, CategoryResponse
-
 # ייבוא השירות החיצוני של גוגל
 from services.google_places import fetch_attractions_from_google
 
@@ -34,6 +30,7 @@ def get_all_categories(db: Session = Depends(get_db),    user_id: int = Depends(
 def get_attractions(
     city_id: Optional[int] = Query(None, description="סינון לפי מזהה עיר מתוך מסד הנתונים מקומי"),
     category_id: Optional[int] = Query(None, description="סינון לפי מזהה קטגוריה מתוך מסד הנתונים המקומי"),
+    max_price: Optional[float] = Query(None, description="מחיר מקסימלי לאטרקציה (סינון תקציב)"), # <-- התוספת
     db: Session = Depends(get_db),
     user_id: int = Depends( security.get_current_user_id)  
 
@@ -51,6 +48,8 @@ def get_attractions(
     # סינון דינמי לפי מזהה קטגוריה
     if category_id is not None:
         query = query.filter(Attraction.category_id == category_id)
+    if max_price is not None:
+        query = query.filter(Attraction.default_price <= max_price)
         
     return query.all()
 
