@@ -1,150 +1,197 @@
 import React, { useState } from 'react';
-import { tripsAPI } from '../services/api';
+import MapView from './MapView';
 
-// הקומפוננטה מקבלת את מזהה הטיול הפעיל ואת רשימת האטרקציות שהמשתמש שמר בצד
-const TripBuilder = ({ tripId, savedAttractions }) => {
-  const [itineraryItems, setItineraryItems] = useState([]);
-  const [loading, setLoading] = useState(false);
-  
-  // תואם במדויק למודל ItineraryCreate שלך
-  const [formData, setFormData] = useState({
-    attraction_id: '',
-    visit_date: '',
-    start_time: '',
-    end_time: '',
-    actual_price: 0.0
-  });
+const TripBuilder = ({ savedAttractions, destinationName }) => {
+  const [tripDetails, setTripDetails] = useState(null);
+  const [daysCount, setDaysCount] = useState(3); 
+  const [itinerary, setItinerary] = useState([]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  // הוספת אייטם לסטייט המקומי לפני שליחה לשרת
-  const handleAddItem = (e) => {
+  const handleStartPlanning = (e) => {
     e.preventDefault();
-    if (!formData.attraction_id || !formData.visit_date || !formData.start_time || !formData.end_time) return;
-
-    const newItem = {
-      trip_id: tripId,
-      attraction_id: parseInt(formData.attraction_id),
-      visit_date: formData.visit_date,
-      start_time: formData.start_time + ":00", // פורמט שרת מתאים ל-time
-      end_time: formData.end_time + ":00",
-      actual_price: parseFloat(formData.actual_price) || 0.0
-    };
-
-    // מיון אוטומטי של הרשימה לפי תאריך ושעה לתצוגה כרונולוגית
-    const updatedItinerary = [...itineraryItems, newItem].sort((a, b) => {
-      const dateA = new Date(`${a.visit_date}T${a.start_time}`);
-      const dateB = new Date(`${b.visit_date}T${b.start_time}`);
-      return dateA - dateB;
+    if (daysCount <= 0) return;
+    setTripDetails({
+      destination: destinationName || 'היעד שנבחר',
+      daysCount: daysCount
     });
-
-    setItineraryItems(updatedItinerary);
-    
-    // איפוס חלקי של הטופס (משאירים את התאריך כדי להקל על הזנת אירועים באותו יום)
-    setFormData({ ...formData, attraction_id: '', start_time: '', end_time: '', actual_price: 0.0 });
   };
 
-  // שליחת ה-Bulk לשרת לפי מודל BulkItineraryCreate
-  const handleSaveBulk = async () => {
-    if (itineraryItems.length === 0) return;
-    setLoading(true);
-
-    try {
-      // payload התואם לסכמת BulkItineraryCreate הכוללת את השדה items
-      const payload = { items: itineraryItems };
-      await tripsAPI.createBulkItinerary(payload);
-      alert('הלו"ז נשמר בהצלחה בשרת!');
-      setItineraryItems([]); // ניקוי הלו"ז המקומי לאחר שמירה
-    } catch (err) {
-      console.error('שגיאה בשמירת הלו"ז:', err);
-      alert('שגיאה בשמירת הנתונים.');
-    } finally {
-      setLoading(false);
+  const handleSchedule = (attraction) => {
+    if (!itinerary.find(item => item.name === attraction.name)) {
+      setItinerary([...itinerary, { ...attraction, day_number: 1, start_time: '10:00' }]);
+    } else {
+      alert('האטרקציה הזו כבר משובצת בלו"ז!');
     }
   };
 
-  const removeLocalItem = (indexToRemove) => {
-    setItineraryItems(itineraryItems.filter((_, index) => index !== indexToRemove));
+  const handleRemove = (attractionName) => {
+    setItinerary(itinerary.filter(item => item.name !== attractionName));
   };
 
-  return (
-    <div className="bg-white p-6 rounded-lg shadow-md max-w-4xl mx-auto mt-8" dir="rtl">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">בניית לוח זמנים לטיול</h2>
-      
-      {/* טופס הוספת אטרקציה ללו"ז */}
-      <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end mb-8 bg-blue-50 p-4 rounded-lg border border-blue-100">
-        <div className="col-span-2">
-          <label className="block text-sm font-medium mb-1">אטרקציה</label>
-          <select required name="attraction_id" value={formData.attraction_id} onChange={handleChange} className="w-full border rounded p-2">
-            <option value="">בחר אטרקציה...</option>
-            {savedAttractions?.map(attr => (
-              <option key={attr.id} value={attr.id}>{attr.name}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">תאריך ביקור</label>
-          <input required type="date" name="visit_date" value={formData.visit_date} onChange={handleChange} className="w-full border rounded p-2" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">שעת התחלה</label>
-          <input required type="time" name="start_time" value={formData.start_time} onChange={handleChange} className="w-full border rounded p-2" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">שעת סיום</label>
-          <input required type="time" name="end_time" value={formData.end_time} onChange={handleChange} className="w-full border rounded p-2" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">מחיר בפועל</label>
-          <input type="number" step="0.1" name="actual_price" value={formData.actual_price} onChange={handleChange} className="w-full border rounded p-2" placeholder="0.0" />
-        </div>
-        <div className="col-span-1 md:col-span-6 flex justify-end mt-2">
-          <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700">
-            + הוסף ללו"ז
-          </button>
-        </div>
-      </form>
+  const handleChangeSchedule = (index, field, value) => {
+    const updated = [...itinerary];
+    updated[index][field] = value;
+    setItinerary(updated);
+  };
 
-      {/* תצוגת ציר הזמן (Timeline) של הלו"ז */}
-      <div className="mb-6">
-        <h3 className="text-xl font-semibold mb-4 border-b pb-2">תחנות מתוכננות ({itineraryItems.length})</h3>
-        {itineraryItems.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">טרם נוספו אטרקציות ללו"ז זה.</p>
-        ) : (
-          <ul className="space-y-3">
-            {itineraryItems.map((item, index) => {
-              // שליפת שם האטרקציה להצגה ידידותית
-              const attrName = savedAttractions?.find(a => a.id === item.attraction_id)?.name || `אטרקציה ${item.attraction_id}`;
-              return (
-                <li key={index} className="flex justify-between items-center bg-gray-50 p-3 border rounded border-gray-200">
-                  <div className="flex flex-col">
-                    <span className="font-medium text-gray-800">{attrName}</span>
-                    <span className="text-sm text-gray-600">
-                      📅 {item.visit_date} | 🕒 {item.start_time.substring(0,5)} - {item.end_time.substring(0,5)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-bold text-green-600">₪{item.actual_price}</span>
-                    <button onClick={() => removeLocalItem(index)} className="text-red-500 hover:text-red-700 font-bold">✕</button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+  const handleSaveItinerary = () => {
+    const finalData = {
+      ...tripDetails,
+      itinerary: itinerary
+    };
+    console.log("כל הדאטה שמוכן לשליחה ל-Backend:", finalData);
+    alert(`הטיול ל-${tripDetails.destination} ל-${tripDetails.daysCount} ימים נשמר בהצלחה!`);
+  };
+
+  // --- שלב א': טופס הימים בלבד ---
+  if (!tripDetails) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 max-w-md mx-auto text-center">
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">מגדירים את הטיול</h2>
+        <p className="text-gray-600 mb-6 text-lg">
+          בונה לו"ז עבור <span className="font-bold text-blue-600">{destinationName}</span>
+        </p>
+        
+        <form onSubmit={handleStartPlanning} className="space-y-4">
+          <div className="text-right">
+            <label className="block text-gray-700 font-medium mb-1">לכמה ימים הטיול?</label>
+            <input 
+              type="number"
+              required
+              min="1"
+              max="30"
+              value={daysCount}
+              onChange={(e) => setDaysCount(parseInt(e.target.value))}
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <button 
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 transition"
+          >
+            המשך לשיבוץ אטרקציות ➔
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  // --- שלב ב': מסך בניית הלו"ז ---
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+      <div className="flex justify-between items-center mb-6 border-b pb-4 border-gray-200">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">
+            הלו"ז שלי ל{tripDetails.destination}
+          </h2>
+          <p className="text-sm text-gray-500">משך הטיול: {tripDetails.daysCount} ימים</p>
+        </div>
+        <button 
+          onClick={() => { setTripDetails(null); setItinerary([]); }}
+          className="text-sm text-blue-600 hover:underline"
+        >
+          שנה מספר ימים (מנקה לו"ז)
+        </button>
       </div>
 
-      {/* כפתור שמירה לשרת ב-Bulk */}
-      <button 
-        onClick={handleSaveBulk} 
-        disabled={loading || itineraryItems.length === 0}
-        className="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 disabled:bg-gray-400 transition"
-      >
-        {loading ? 'שומר נתונים מול השרת...' : 'שמור לו"ז מלא לשרת'}
-      </button>
+      {/* פתיחת ה-div של הגריד שהייתה חסרה */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        {/* צד ימין: סל האטרקציות */}
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+          <h3 className="font-semibold text-blue-800 mb-4 text-lg">סל האטרקציות ({savedAttractions?.length || 0})</h3>
+          
+          {savedAttractions?.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              עדיין לא הוספת אטרקציות. חפש למעלה ולחץ על "+ הוסף לטיול".
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {savedAttractions.map((attr, index) => (
+                <li key={index} className="bg-white p-3 rounded shadow-sm border border-gray-200 flex justify-between items-center text-sm">
+                  <span className="font-medium text-gray-800 truncate pl-2" title={attr.name}>{attr.name}</span>
+                  <button 
+                    onClick={() => handleSchedule(attr)}
+                    className="text-green-600 font-bold hover:text-white hover:bg-green-500 px-3 py-1 rounded transition border border-green-500 shrink-0"
+                  >
+                    שבץ בלו"ז ➔
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* צד שמאל: הלו"ז המשובץ */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <h3 className="font-semibold text-gray-800 mb-4 text-lg">הלו"ז שלי ({itinerary.length})</h3>
+          
+          {itinerary.length === 0 ? (
+            <div className="min-h-[150px] flex items-center justify-center border-2 border-dashed border-gray-300 rounded bg-white">
+              <p className="text-gray-400 text-sm">
+                לחץ על "שבץ בלו"ז" כדי לבנות את המסלול...
+              </p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {itinerary.map((item, index) => (
+                <li key={index} className="bg-white p-3 rounded shadow-sm border border-gray-300 flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <span className="font-bold text-gray-800">{item.name}</span>
+                    <button 
+                      onClick={() => handleRemove(item.name)}
+                      className="text-red-500 hover:text-red-700 font-bold px-2"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  
+                  <div className="flex gap-4 text-sm bg-gray-50 p-2 rounded border border-gray-100">
+                    <div className="flex flex-col w-1/2">
+                      <label className="text-gray-600 mb-1 text-xs">יום בטיול:</label>
+                      <select
+                        value={item.day_number}
+                        onChange={(e) => handleChangeSchedule(index, 'day_number', parseInt(e.target.value))}
+                        className="border border-gray-300 rounded px-2 py-1 bg-white outline-none focus:border-blue-500"
+                      >
+                        {Array.from({ length: tripDetails.daysCount }, (_, i) => i + 1).map(day => (
+                          <option key={day} value={day}>יום {day}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex flex-col w-1/2">
+                      <label className="text-gray-600 mb-1 text-xs">שעת התחלה:</label>
+                      <input 
+                        type="time" 
+                        value={item.start_time}
+                        onChange={(e) => handleChangeSchedule(index, 'start_time', e.target.value)}
+                        className="border border-gray-300 rounded px-2 py-1 outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div> {/* סגירת ה-div של הגריד */}
+
+      {/* המפה האינטראקטיבית - מופיעה רק אם יש אטרקציות בלו"ז */}
+      {itinerary.length > 0 && (
+        <div className="mt-8">
+          <MapView attractions={itinerary} />
+        </div>
+      )}
+
+      <div className="mt-8 text-left border-t pt-6">
+        <button 
+          onClick={handleSaveItinerary}
+          disabled={itinerary.length === 0}
+          className="bg-green-600 text-white px-8 py-3 rounded-lg font-bold shadow hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          שמור מסלול סופי
+        </button>
+      </div>
     </div>
   );
 };

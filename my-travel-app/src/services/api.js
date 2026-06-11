@@ -21,9 +21,15 @@ export const geographyAPI = {
 };
 
 // קריאות אטרקציות וחיפוש בזמן אמת
+// קריאות אטרקציות וחיפוש בזמן אמת
 export const attractionsAPI = {
   exploreLive: (cityId, category) => 
-    API.get('/attractions/explore-live', { params: { city_id: cityId, category } }),
+    API.get('/attractions/explore-live', { 
+      params: { 
+        city_id: cityId, 
+        category_name: category // <-- פה החלפנו לשם המדויק שהשרת דורש
+      } 
+    }),
 };
 
 // ניהול טיולים ולו"ז
