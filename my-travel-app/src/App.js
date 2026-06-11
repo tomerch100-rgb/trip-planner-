@@ -1,13 +1,26 @@
 import React, { useState, useContext } from 'react';
 import SearchBar from './components/SearchBar';
-import { AuthContext } from './context/AuthContext'; // מחקנו את שורת ה-import הכפולה שהייתה מעל
+import { AuthContext } from './context/AuthContext';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 
 function App() {
   const [attractions, setAttractions] = useState([]);
-  const { user } = useContext(AuthContext);
+  // הוספנו פה את ה-logout
+  const { user, logout } = useContext(AuthContext); 
   const [authMode, setAuthMode] = useState('login');
+
+  // פונקציית ההתנתקות החדשה
+  const handleLogout = () => {
+    if (logout) {
+      logout();
+    } else {
+      // אם אין פונקציית logout מסודרת בקונטקסט, זה ינקה את הזיכרון ידנית
+      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      window.location.reload(); 
+    }
+  };
 
   if (!user) {
     return authMode === 'login' ? (
@@ -19,7 +32,19 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8" dir="rtl">
-      <header className="text-center mb-10">
+      {/* הוספנו relative ל-header כדי למקם את הכפתור בפינה */}
+      <header className="text-center mb-10 relative">
+        
+        {/* כפתור היציאה החדש */}
+        <div className="absolute top-0 right-0">
+          <button
+            onClick={handleLogout}
+            className="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-md font-medium transition"
+          >
+            התנתק
+          </button>
+        </div>
+
         <h1 className="text-4xl font-bold text-gray-800 mb-2">Trip Planner</h1>
         <p className="text-gray-600">תכנן את הטיול המושלם שלך בהתאמה אישית</p>
       </header>
