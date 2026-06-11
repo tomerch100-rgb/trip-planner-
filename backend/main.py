@@ -5,16 +5,16 @@ app = FastAPI()
 
 origins = [
     "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "http://10.0.0.3:3000", # הכתובת הספציפית מהשגיאה שקיבלת עכשיו
 ]
 
-# 3. הוספת המידלוור לאפליקציה
+# הוספת ה-Middleware שמטפל ב-CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,            # מאשר את הכתובות ברשימה
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],              # מאשר את כל סוגי הבקשות (GET, POST וכו')
-    allow_headers=["*"],              # מאשר את כל סוגי ה-Headers
+    allow_methods=["*"], # מאשר את כל סוגי הבקשות (GET, POST, PUT, DELETE)
+    allow_headers=["*"], # מאשר את כל סוגי ה-Headers
 )
 app.include_router(home_router.router , prefix= "/home" ) 
 app.include_router(auth_router.router , prefix= "/auth") 
