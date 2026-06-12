@@ -1,87 +1,108 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import API from '../services/api';
+import { Compass, Lock, User, Loader2, AlertCircle } from 'lucide-react';
 
-// הגדרת ה-Prop בכניסה לפונקציה
-const LoginForm = ({ onSwitchToRegister }) => {
+export default function LoginForm({ onSwitchToRegister }) {
   const { login } = useContext(AuthContext);
-  const [formData, setFormData] = useState({ username: '', password: '' });
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-   
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
-
+    setLoading(true);
+    
     try {
-      const response = await API.post('/auth/login', formData);
-      login(response.data.access_token);
-      alert('התחברת בהצלחה!');
+      await login(username, password);
+      // ברגע שההתחברות מצליחה, הסטייט של ה-user ב-Context מתעדכן 
+      // ו-App.js יעביר את המשתמש אוטומטית למסך הטיולים
     } catch (err) {
-      setError('שגיאה בהתחברות. אנא בדוק את שם המשתמש והסיסמה.');
       console.error(err);
+      setError(err.response?.data?.detail || "Invalid username or password. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10" dir="rtl">
-      <h2 className="text-2xl font-bold text-center mb-6">התחברות למערכת</h2>
-      {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">{error}</div>}
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-gray-700 mb-1">שם משתמש</label>
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-            minLength={2}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-gray-700 mb-1">סיסמה</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            minLength={6}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-        </div>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
+      <div className="w-full max-w-md bg-white border border-slate-100 rounded-3xl shadow-xl p-8 space-y-6">
         
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 transition"
-        >
-          {loading ? 'מתחבר...' : 'התחבר'}
-        </button>
-        
-        <p className="text-center mt-4 text-sm">
-          אין לך משתמש?{' '}
+        {/* Brand Header */}
+        <div className="text-center space-y-2">
+          <div className="mx-auto w-12 h-12 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-md shadow-cyan-100">
+            <Compass className="w-6 h-6" />
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900">Welcome to RoamWise</h1>
+          <p className="text-sm text-slate-400 font-medium">Log in to start planning your luxury custom escape</p>
+        </div>
+
+        {/* Error Notification */}
+        {error && (
+          <div className="bg-red-50 border border-red-100 text-red-600 rounded-xl p-4 flex items-start gap-2.5 text-sm font-medium">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <p>{error}</p>
+          </div>
+        )}
+
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-2 tracking-wide">Username</label>
+            <div className="relative">
+              <User className="absolute left-4 top-3.5 w-4 h-4 text-slate-300" />
+              <input 
+                type="text"
+                placeholder="Enter your username"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm font-medium focus:outline-none focus:border-cyan-500 transition-colors"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-2 tracking-wide">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-4 top-3.5 w-4 h-4 text-slate-300" />
+              <input 
+                type="password"
+                placeholder="••••••••"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm font-medium focus:outline-none focus:border-cyan-500 transition-colors"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
           <button
-            type="button" // מונע הגשת טופס
-            onClick={onSwitchToRegister}
-            className="text-blue-600 underline"
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl py-3.5 text-sm font-bold shadow-md shadow-cyan-100 hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            הרשם
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign In to Your Workspace"}
           </button>
-        </p>
-      </form>
+        </form>
+
+        {/* Footer Switch */}
+        <div className="text-center pt-2 border-t border-slate-100">
+          <p className="text-xs text-slate-400 font-medium">
+            Don't have an account?{" "}
+            <button 
+              onClick={onSwitchToRegister}
+              type="button" 
+              className="text-cyan-600 font-bold hover:underline"
+            >
+              Create an account
+            </button>
+          </p>
+        </div>
+
+      </div>
     </div>
   );
-};
-
-export default LoginForm;
+}

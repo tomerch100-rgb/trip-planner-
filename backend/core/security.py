@@ -40,14 +40,22 @@ def verify_token (token:str) :
         return payload
 
     except jwt.ExpiredSignatureError:
+        print("DEBUG: Token has expired") # <-- הדפסה לבדיקה
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired"
         )
     except jwt.InvalidTokenError:
+        print("DEBUG: Invalid token") # <-- הדפסה לבדיקה
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token"
+        )
+    except Exception as e:
+        print(f"DEBUG: Unknown JWT error: {e}") # <-- תופס כל שגיאה אחרת!
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token Error"
         )
     
 def get_current_user_id (box :HTTPAuthorizationCredentials = Depends(safe)):

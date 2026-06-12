@@ -1,11 +1,10 @@
 import axios from 'axios';
 
-// יצירת אינסטנס של Axios עם כתובת השרת שלך
 const API = axios.create({
-  baseURL: 'http://localhost:8000', // שנה לפורט המדויק של ה-FastAPI שלך
+  baseURL: 'http://localhost:8000',
 });
 
-// Interceptor להוספת טוקן ה-JWT אוטומטית לכל בקשה יוצאת
+// הוספת הטוקן לכל בקשה באופן אוטומטי
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -14,28 +13,48 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
-// קריאות גיאוגרפיה (Cascading Dropdown)
+// קריאות גיאוגרפיה
 export const geographyAPI = {
   getCountries: () => API.get('/geography/countries'),
   getCities: (countryId) => API.get(`/geography/countries/${countryId}/cities`),
 };
 
-// קריאות אטרקציות וחיפוש בזמן אמת
-// קריאות אטרקציות וחיפוש בזמן אמת
+// קריאות אטרקציות - מאוחד ומסודר
 export const attractionsAPI = {
-  exploreLive: (cityId, category) => 
+  // שליפת קטגוריות לתפריט סינון
+  getCategories: () => API.get('/attractions/categories'),
+
+  // חיפוש אטרקציות מסוננות מה-DB המקומי
+  getAttractions: (cityId, categoryId, maxPrice) => {
+    return API.get('/attractions/', { 
+      params: { 
+        city_id: cityId, 
+        category_id: categoryId,
+        max_price: maxPrice
+      } 
+    });
+  },
+
+  // חיפוש Live מול גוגל (כשאין ב-DB)
+  exploreLive: (cityId, categoryName) => 
     API.get('/attractions/explore-live', { 
       params: { 
         city_id: cityId, 
-        category_name: category // <-- פה החלפנו לשם המדויק שהשרת דורש
+        category_name: categoryName 
       } 
     }),
+
+  // שליפת אטרקציות לפי מדינה
+  getByCountry: (countryId) => {
+    return API.get(`/attractions/by-country/${countryId}`);
+  }
 };
 
-// ניהול טיולים ולו"ז
+// ניהול טיולים
 export const tripsAPI = {
-  getTrips: () => API.get('/trips'),
+  getTrips: () => API.get('/trip'),
   createBulkItinerary: (itineraryData) => API.post('/itinerary/bulk', itineraryData),
+  planMultiCountryTrip: (tripData) => API.post('/trip/plan-multi-country', tripData),
 };
 
 export default API;
