@@ -34,23 +34,22 @@ def authenticate_user(db: Session, user_login: schemas.UserLogin):
         
     return user
 
-
 def create_trip(db: Session, trip: schemas.TripCreate, user_id: int):
+    # trip.country_id מגיע מתוך ה-Schema המעודכן שלך
     new_trip = models.Trip(
-        city_id=trip.city_id, 
+        city_id=trip.city_id,      # יכול להיות None
+        country_id=trip.country_id, # הוספנו את זה
         start_date=trip.start_date,
         end_date=trip.end_date,
-        user_id=user_id  
+        user_id=user_id
     )
     db.add(new_trip)
     db.commit()
     db.refresh(new_trip)
-    
     return new_trip
 
 def get_user_trips(db: Session, user_id: int):
     return db.query(models.Trip).filter(models.Trip.user_id == user_id).all()
-
 
 
 def get_attractions_by_city(db: Session, city_id: int):
@@ -59,11 +58,11 @@ def get_attractions_by_city(db: Session, city_id: int):
 
 
 
-def get_attractions_by_category(db: Session, city_id: int, category_id: int):
-
-    return db.query(models.Attraction).filter(
+def get_attractions_by_category(db: Session, city_id: int, category_name: str):
+    # כאן אנחנו מסננים לפי city_id וגם לפי שם הקטגוריה
+    return db.query(models.Attraction).join(models.Category).filter(
         models.Attraction.city_id == city_id,
-        models.Attraction.category_id == category_id
+        models.Category.name == category_name
     ).all()
 
 # פונקציות ניהול לו"ז יומי ()
@@ -124,3 +123,40 @@ def get_trip_total_cost(db: Session, trip_id: int):
     if total is None :
         return 0.0
     return total
+def create_multi_city_trip(db: Session, city_ids: List[int], start_date, end_date, user_id: int):
+    
+    new_trip = models.Trip(
+        city_id=city_ids[0], 
+        start_date=start_date,
+        end_date=end_date,
+        user_id=user_id
+    )
+    db.add(new_trip)
+    db.commit()
+    db.refresh(new_trip)
+    return new_trip
+
+
+def get_attractions_for_cities(db: Session, city_ids: List[int]):
+    # אם הרשימה ריקה, נחזיר רשימה ריקה מיד בלי לפנות ל-DB
+    if not city_ids:
+        return []
+        
+    return db.query(models.Attraction).filter(
+        models.Attraction.city_id.in_(city_ids)
+    ).all()
+
+
+def get_attractions_by_country(db: Session, country_id: int):
+    return db.query(models.Attraction).join(models.City).filter(
+        models.City.country_id == country_id
+    ).all()
+
+def get_category_id_by_name(db: Session, category_name: str):
+    if not category_name:
+        return None
+    # מחפשים את הקטגוריה לפי שם
+    cat = db.query(models.AttractionCategory).filter(
+        models.AttractionCategory.name.ilike(category_name) # ilike עוזר למנוע בעיות של אותיות גדולות/קטנות
+    ).first()
+    return cat.id if cat else None

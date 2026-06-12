@@ -1,32 +1,40 @@
 import React, { useState, useContext } from 'react';
-import SearchBar from './components/SearchBar';
 import { AuthContext } from './context/AuthContext';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
+import SearchBar from './components/SearchBar';
 import AttractionsList from './components/AttractionsList';
-import TripBuilder from './components/TripBuilder'; // ייבוא בונה הלו"ז
+import TripBuilder from './components/TripBuilder';
 
 function App() {
-  const [attractions, setAttractions] = useState([]);
-  const [destinationName, setDestinationName] = useState('');
-  const [savedAttractions, setSavedAttractions] = useState([]); // אטרקציות שנבחרו לטיול
   const { user, logout } = useContext(AuthContext); 
   const [authMode, setAuthMode] = useState('login');
+  const [currentStep, setCurrentStep] = useState('destination');
+  const [liveAttractions, setLiveAttractions] = useState([]);
+  const [selectedCityName, setSelectedCityName] = useState('');
+  const [myTripAttractions, setMyTripAttractions] = useState([]); 
 
-  const handleLogout = () => {
-    if (logout) logout();
-    else {
-      localStorage.removeItem('token');
-      window.location.reload(); 
+  const handleSearchResults = (attractions, cityName) => {
+    setLiveAttractions(attractions);
+    setSelectedCityName(cityName);
+    setCurrentStep('attractions');
+  };
+
+  // תיקון הבעיה: הוספתי את ה-attraction כפרמטר לפונקציה
+  const handleAddToTrip = (attraction) => {
+    if (!attraction || !attraction.name) return; // הגנה
+    
+    if (!myTripAttractions.find(a => a.id === attraction.id)) {
+      setMyTripAttractions([...myTripAttractions, attraction]);
+      alert(`${attraction.name} הוספה לטיול!`);
+    } else {
+      alert('אטרקציה זו כבר קיימת במסלול.');
     }
   };
 
-  // פונקציה שמוסיפה אטרקציה מהחיפוש לרשימה של הטיול
-  const handleAddToTrip = (attraction) => {
-    // מונע הוספה של אותה אטרקציה פעמיים לרשימת הבחירה
-    if (!savedAttractions.find(a => a.name === attraction.name)) {
-      setSavedAttractions([...savedAttractions, attraction]);
-    }
+  const handleLogout = () => {
+    logout();
+    window.location.reload();
   };
 
   if (!user) {
@@ -38,44 +46,45 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8" dir="rtl">
-      <header className="text-center mb-10 relative">
-        <div className="absolute top-0 right-0">
-          <button onClick={handleLogout} className="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-md font-medium transition">
-            התנתק
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white p-4 shadow flex justify-between items-center">
+        <h1 className="text-xl font-bold text-blue-600">RoamWise</h1>
+        <div className="flex gap-4">
+          <button onClick={() => setCurrentStep('destination')} className="text-sm font-bold text-slate-600 hover:text-blue-600">
+            New Search
           </button>
+          <button onClick={handleLogout} className="text-red-500 font-bold">Sign Out</button>
         </div>
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">Trip Planner</h1>
-        <p className="text-gray-600">תכנן את הטיול המושלם שלך בהתאמה אישית</p>
       </header>
 
-      <main className="max-w-6xl mx-auto space-y-12">
-        {/* 1. חיפוש */}
-        <section>
-<SearchBar onSearchResults={(results, cityName) => {
-  setAttractions(results);
-  setDestinationName(cityName);
-}} />        </section>
+      <main className="p-8 max-w-6xl mx-auto">
+        {currentStep === 'destination' && (
+          <SearchBar onSearchResults={handleSearchResults} />
+        )}
 
-        {/* 2. תוצאות חיפוש */}
-        <section>
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">אטרקציות שנמצאו</h2>
-          <AttractionsList 
-            attractions={attractions} 
-            onAddToTrip={handleAddToTrip} 
-          />
-        </section>
-
-        {/* 3. בונה הלו"ז - מופיע רק אם בחרנו אטרקציות */}
-        {/* 3. בונה הלו"ז - מופיע רק אם בחרנו אטרקציות */}
-        {savedAttractions.length > 0 && (
-          <section className="pt-10 border-t border-gray-200">
-            <TripBuilder 
-              tripId={9} 
-              savedAttractions={savedAttractions} 
-              destinationName={destinationName} 
+        {currentStep === 'attractions' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Attractions in {selectedCityName}</h2>
+            <AttractionsList 
+              attractions={liveAttractions} 
+              onAddToTrip={handleAddToTrip} 
             />
-          </section>
+            {myTripAttractions.length > 0 && (
+              <button 
+                onClick={() => setCurrentStep('planning')}
+                className="fixed bottom-8 right-8 bg-green-600 text-white px-6 py-3 rounded-full shadow-xl hover:bg-green-700 transition"
+              >
+                Build Itinerary ({myTripAttractions.length}) ➔
+              </button>
+            )}
+          </div>
+        )}
+
+        {currentStep === 'planning' && (
+          <TripBuilder 
+            savedAttractions={myTripAttractions} 
+            destinationName={selectedCityName} 
+          />
         )}
       </main>
     </div>

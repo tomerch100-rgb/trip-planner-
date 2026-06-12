@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from backend.classes import schemas
+from backend.classes import schemas,crud
 from backend.core import security
 from backend.DB.db import get_db 
 # ייבוא מודלי ה-ORM (מסד הנתונים)
@@ -25,6 +25,12 @@ def get_all_categories(db: Session = Depends(get_db),    user_id: int = Depends(
     """
     return db.query(AttractionCategory).all()
 
+@router.get("/categories-with-attractions", response_model=List[schemas.CategoryWithAttractionsResponse])
+def get_categories_and_their_attractions(city_id: int, db: Session = Depends(get_db)):
+    """
+    מחזיר את כל הקטגוריות יחד עם האטרקציות שלהן עבור עיר ספציפית.
+    """
+    return crud.get_categories_with_attractions(db, city_id)
 
 @router.get("/", response_model=List[AttractionResponse])
 def get_attractions(
@@ -53,38 +59,59 @@ def get_attractions(
         
     return query.all()
 
-
 @router.get("/explore-live")
 def explore_live_attractions(
-    city_id: int = Query(..., description="מזהה העיר מתוך מסד הנתונים שלנו"),
-    category_name: str = Query(..., description="שם הקטגוריה באנגלית לחיפוש בגוגל (למשל: Museums, Parks, Restaurants)"),
-    db: Session = Depends(get_db) ,
-    user_id: int = Depends( security.get_current_user_id)  
-
-   
+    city_id: int,
+    category_name: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(security.get_current_user_id)
 ):
-    """
-    נתיב מתקדם: חיפוש אטרקציות בזמן אמת מול Google Places API.
-    השרת מושך את שם העיר מה-DB שלנו לפי ה-ID ששלח ה-Frontend, 
-    מבצע את הפנייה המאובטחת לגוגל, ומחזיר את המידע העדכני ביותר.
-    """
-    # 1. שליפת העיר ממסד הנתונים כדי לקבל את השם שלה (למשל "Paris")
+    if category_name and category_name.strip() == "":
+        category_name = None
+
     city = db.query(City).filter(City.id == city_id).first()
     if not city:
-        raise HTTPException(status_code=404, detail="העיר המבוקשת לא נמצאה במערכת")
+        raise HTTPException(status_code=404, detail="העיר לא נמצאה")
 
-    # 2. הפעלת השירות החיצוני של גוגל עם שם העיר והקטגוריה
-    print(f"DEBUG: מחפש {category_name} בעיר {city.name} בזמן אמת דרך Google Places...")
+    query = db.query(Attraction).filter(Attraction.city_id == city_id)
+    if category_name:
+        query = query.join(AttractionCategory).filter(AttractionCategory.name == category_name)
+    
+    cached_attractions = query.all()
+
+    if cached_attractions:
+        return {
+            "city_searched": city.name,
+            "category": category_name,
+            "total_results": len(cached_attractions),
+            "attractions": cached_attractions
+        }
+
     google_results = fetch_attractions_from_google(city.name, category_name)
-
-    # 3. החזרת הנתונים המובנים למשתמש
+    saved_attractions = [] 
+    
+    for item in google_results:
+        new_attr = Attraction(
+            name=item.get('name') or 'Unknown',
+            city_id=city_id,
+            address=item.get('formatted_address') or item.get('address') or 'כתובת לא ידועה',
+            default_price=item.get('price') or 0.0,
+            latitude=item.get('latitude'),
+            longitude=item.get('longitude')
+        )
+        db.add(new_attr)
+        saved_attractions.append(new_attr)
+    
+    db.commit()
+    for attr in saved_attractions:
+        db.refresh(attr)
+    
     return {
         "city_searched": city.name,
         "category": category_name,
-        "total_results": len(google_results),
-        "attractions": google_results
+        "total_results": len(saved_attractions),
+        "attractions": saved_attractions
     }
-
 @router.post("/", response_model=AttractionResponse, status_code=201)
 def create_attraction(
     attraction: schemas.AttractionCreate,
@@ -96,3 +123,10 @@ def create_attraction(
     db.commit()
     db.refresh(new_attraction)
     return new_attraction
+
+@router.get("/by-country/{country_id}", response_model=List[schemas.AttractionResponse])
+def read_attractions_by_country(country_id: int, db: Session = Depends(get_db)):
+    attractions = crud.get_attractions_by_country(db, country_id)
+    if not attractions:
+        raise HTTPException(status_code=404, detail="לא נמצאו אטרקציות במדינה זו")
+    return attractions

@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field, EmailStr,ConfigDict
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from typing import List, Optional
-from datetime import date, time, datetime
+from datetime import date, time
 
 # --- User Schemas ---
 class UserCreate(BaseModel):
@@ -14,17 +14,30 @@ class UserLogin(BaseModel):
 
 # --- Trip Schemas ---
 class TripCreate(BaseModel):
-    city_id: int = Field(..., description="מזהה העיר מתוך טבלת הערים")
+    city_id: int
     start_date: date
     end_date: date
 
 class TripResponse(TripCreate):
     id: int
     user_id: int
-   # created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True
+# המודל החדש לאיחוד טיול ואטרקציות
+class MultiCityTripRequest(BaseModel):
+    city_ids: List[int]
+    start_date: date
+    end_date: date
+
+class AttractionResponse(BaseModel):
+    id: int
+    name: str
+    city_id: int | None = None
+    model_config = ConfigDict(from_attributes=True)
+
+class TripWithAttractionsResponse(TripResponse):
+    attractions: List[AttractionResponse] = []
+    model_config = ConfigDict(from_attributes=True)
 
 # --- Attraction Schemas ---
 class AttractionCreate(BaseModel):
@@ -39,8 +52,7 @@ class AttractionResponse(AttractionCreate):
     id: int
     city_id: int | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # --- Trip Itinerary (לו"ז יומי) Schemas ---
 class ItineraryCreate(BaseModel):
@@ -55,8 +67,7 @@ class ItineraryResponse(ItineraryCreate):
     id: int
     next_recommended_attraction_id: Optional[int] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CategoryResponse(BaseModel):
     id: int
@@ -65,7 +76,7 @@ class CategoryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class BulkItineraryCreate(BaseModel):
-    items: List[ItineraryCreate] # רשימה של כל מה שהמשתמש שיבץ בלו"ז    
+    items: List[ItineraryCreate]
 
 class CountryResponse(BaseModel):
     id: int
@@ -73,10 +84,16 @@ class CountryResponse(BaseModel):
     country_code: str
     model_config = ConfigDict(from_attributes=True)
 
-
 class CityGeographyResponse(BaseModel):
     id: int
     name: str
     timezone: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+class CategoryWithAttractionsResponse(BaseModel):
+    id: int
+    name: str
+    attractions: List[AttractionResponse] = []
+
+    class Config:
+        from_attributes = True

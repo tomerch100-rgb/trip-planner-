@@ -1,91 +1,116 @@
-import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect } from 'react';
+import { attractionsAPI } from '../services/api';
 
-// תיקון סופי לבאג האייקונים השבורים בריאקט - טעינה מ-CDN רשמי
-let DefaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34]
-});
-L.Marker.prototype.options.icon = DefaultIcon;
+const AttractionsList = ({ attractions: initialAttractions, onAddToTrip }) => {
+  const [categories, setCategories] = useState([]); 
+  const [selectedCategory, setSelectedCategory] = useState(''); 
+  const [displayedAttractions, setDisplayedAttractions] = useState([]); 
 
-// קומפוננטת עזר שממרכזת את המפה ומזיזה אותה לפי הנקודות הקיימות
-const RecenterMap = ({ markers }) => {
-  const map = useMap();
-
+  // טעינת קטגוריות מהשרת עבור הסינון
   useEffect(() => {
-    if (markers && markers.length > 0) {
-      const bounds = L.latLngBounds(markers.map(m => [m.lat, m.lng]));
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
-      
-      setTimeout(() => {
-        map.invalidateSize();
-      }, 300);
-    }
-  }, [markers, map]);
+    const loadCategories = async () => {
+      try {
+        const response = await attractionsAPI.getCategories();
+        setCategories(response.data || []);
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+      }
+    };
+    loadCategories();
+  }, []);
 
-  return null;
-};
+  // עדכון רשימת האטרקציות כשהחיפוש מתעדכן
+  useEffect(() => {
+    setDisplayedAttractions(initialAttractions || []);
+    setSelectedCategory(''); 
+  }, [initialAttractions]);
 
-const MapView = ({ attractions }) => {
-  // פונקציית עזר לחילוץ קואורדינטות בצורה גמישה
-  const getCoordinates = (attr) => {
-    const lat = attr.latitude ?? attr.lat ?? attr.geometry?.location?.lat;
-    const lng = attr.longitude ?? attr.lng ?? attr.geometry?.location?.lng;
-    
-    if (lat !== undefined && lng !== undefined && lat !== null && lng !== null) {
-      return { lat: parseFloat(lat), lng: parseFloat(lng) };
+  // לוגיקת הסינון מקומית
+  const handleCategoryChange = (e) => {
+    const catId = e.target.value;
+    setSelectedCategory(catId);
+
+    if (!catId || catId === '') {
+      setDisplayedAttractions(initialAttractions || []);
+    } else {
+      const filtered = (initialAttractions || []).filter(attr => 
+        attr.category_id === parseInt(catId)
+      );
+      setDisplayedAttractions(filtered);
     }
-    return null;
   };
 
-  // מייצר רשימה של נקודות תקינות בלבד
-  const validMarkers = attractions
-    .map(attr => ({
-      ...attr,
-      coords: getCoordinates(attr)
-    }))
-    .filter(item => item.coords !== null);
-
-  const defaultCenter = [35.6762, 139.6503]; 
+  // מונע תצוגה ריקה כשעוד לא חיפשנו כלום
+  if (!Array.isArray(initialAttractions) || initialAttractions.length === 0) {
+    return null;
+  }
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100">
-      <h3 className="text-xl font-bold text-gray-800 mb-4">מפת האטרקציות בטיול</h3>
+    <div className="space-y-6">
       
-      <div className="w-full rounded-lg overflow-hidden z-0 shadow-inner" style={{ height: '400px' }}>
-        <MapContainer 
-          center={defaultCenter} 
-          zoom={12} 
-          scrollWheelZoom={true}
-          style={{ height: '400px', width: '100%' }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          
-          <RecenterMap markers={validMarkers.map(m => m.coords)} />
+      {/* תפריט הסינון */}
+      {categories.length > 0 && (
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700">סינון לפי קטגוריות</h3>
+          </div>
 
-          {validMarkers.map((item, index) => (
-            <Marker key={index} position={[item.coords.lat, item.coords.lng]}>
-              <Popup>
-                <div className="text-right" dir="rtl">
-                  <h4 className="font-bold text-gray-900">{item.name}</h4>
-                  <p className="text-xs text-gray-600 mt-1">{item.formatted_address || item.address}</p>
-                  {item.rating && <p className="text-xs text-yellow-600 mt-1">⭐ {item.rating}</p>}
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedCategory}
+              onChange={handleCategoryChange}
+              className="p-2 border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm text-sm min-w-[200px]"
+            >
+              <option value="">כל הקטגוריות (ללא סינון)</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* רשימת האטרקציות (ללא מפה! פריסה רחבה של כרטיסיות) */}
+      {displayedAttractions.length === 0 ? (
+        <div className="text-center py-10 text-gray-400">
+          <p className="text-sm font-medium">לא נמצאו אטרקציות בקטגוריה זו.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {displayedAttractions.map((attraction, index) => (
+            <div 
+              key={attraction.id || index} 
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col justify-between hover:shadow-md transition-shadow"
+            >
+              <div>
+                <h4 className="text-lg font-semibold text-gray-800 mb-2">{attraction.name}</h4>
+                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                  {attraction.editorial_summary || attraction.description || 'אין תיאור זמין עבור אטרקציה זו.'}
+                </p>
+              </div>
+              
+              <div className="mt-auto">
+                <div className="pt-3 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500 mb-4">
+                  <span>⭐ {attraction.rating || 'אין דירוג'}</span>
+                  <span className="truncate max-w-[150px]">{attraction.formatted_address || attraction.address}</span>
                 </div>
-              </Popup>
-            </Marker>
+                
+                {/* כפתור ההוספה */}
+                <button
+                  onClick={() => onAddToTrip(attraction)}
+                  className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition text-sm font-medium"
+                >
+                  + הוסף לטיול
+                </button>
+              </div>
+            </div>
           ))}
-        </MapContainer>
-      </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default MapView;
+export default AttractionsList;
