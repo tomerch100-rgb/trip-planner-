@@ -9,23 +9,33 @@ export const AuthProvider = ({ children }) => {
 
   // בדיקה אוטומטית בעת טעינת האתר אם המשתמש כבר מחובר (יש טוקן בזיכרון)
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        // פיענוח ה-JWT Payload בצד הלקוח כדי לחלץ את ה-user_id
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const payload = JSON.parse(window.atob(base64));
-        
-        setUser({ user_id: payload.sub || payload.user_id });
-      } catch (e) {
-        // אם הטוקן פגום או לא תקין, ננקה אותו
-        localStorage.removeItem('token');
+    const verifyToken = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setLoading(false);
+        return;
       }
-    }
-    setLoading(false);
-  }, []);
 
+      try {
+        // שולחים את הטוקן לשרת לבדיקה
+        // אנחנו צריכים נתיב כזה ב-Backend, או להשתמש בנתיב קיים שדורש זיהוי
+        const response = await axios.get('http://localhost:8000/trips/', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        // אם הצלחנו לקבל רשימת טיולים, סימן שהטוקן תקין!
+        // נעדכן את ה-user ב-Context
+        setUser({ authenticated: true }); 
+      } catch (e) {
+        // אם השרת החזיר 401, סימן שהטוקן לא תקין
+        localStorage.removeItem('token');
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    verifyToken();
+  }, []);
   // פונקציית התחברות - שולחת את ה-UserLogin Pydantic Model שלך כ-JSON
   const login = async (username, password) => {
     const response = await axios.post('http://localhost:8000/auth/login', {
