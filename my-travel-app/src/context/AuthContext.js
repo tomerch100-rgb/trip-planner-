@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
       try {
         // שולחים את הטוקן לשרת לבדיקה
         // אנחנו צריכים נתיב כזה ב-Backend, או להשתמש בנתיב קיים שדורש זיהוי
-        const response = await axios.get('http://localhost:8000/trips/', {
+       await axios.get('http://localhost:8000/trips/', {
           headers: { Authorization: `Bearer ${token}` }
         });
         

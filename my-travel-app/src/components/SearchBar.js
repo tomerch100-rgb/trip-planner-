@@ -4,68 +4,59 @@ import { geographyAPI, attractionsAPI, tripsAPI } from '../services/api';
 const SearchBar = ({ onSearchResults }) => {
   const [countries, setCountries] = useState([]);
   const [cities, setCities] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
-  
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [plannedCities, setPlannedCities] = useState([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 1. טעינת מדינות כשהדף עולה
   useEffect(() => {
     geographyAPI.getCountries().then(res => setCountries(res.data));
+    attractionsAPI.getCategories().then(res => setCategories(res.data || []));
   }, []);
 
-  // 2. טעינת ערים כשנבחרת מדינה
   useEffect(() => {
     if (selectedCountry) {
       geographyAPI.getCities(selectedCountry).then(res => setCities(res.data));
-    } else {
-      setCities([]);
     }
   }, [selectedCountry]);
 
-  // 🌟 הפונקציה החסרה: חיפוש חי שמביא נתונים מגוגל ושומר ב-DB המקומי!
   const handleLiveSearch = async () => {
     if (!selectedCity) return;
     setLoading(true);
     try {
-      // קריאה ל-explore-live שתמלא לנו את ה-DB באטרקציות של העיר הזו
-      const response = await attractionsAPI.exploreLive(selectedCity, "");
-      // העברת התוצאות (או מערך ריק במקרה ואין) אל קומפוננטת האב (App.js)
+      const response = await attractionsAPI.exploreLive(selectedCity, selectedCategory);
       onSearchResults(response.data.attractions || [], "Live Search");
     } catch (err) {
-      console.error("Error doing live search:", err);
+      console.error("Error searching:", err);
     } finally {
       setLoading(false);
     }
   };
 
   const addCityToPlan = () => {
-    if (selectedCity && !plannedCities.find(c => c.id.toString() === selectedCity.toString())) {
+    if (selectedCity) {
       const cityObj = cities.find(c => c.id.toString() === selectedCity.toString());
-      const countryName = countries.find(c => c.id.toString() === selectedCountry).name;
-      setPlannedCities([...plannedCities, { ...cityObj, countryName }]);
-      setSelectedCity('');
+      if (cityObj) {
+        const countryName = countries.find(c => c.id.toString() === selectedCountry)?.name || 'Unknown';
+        setPlannedCities([...plannedCities, { ...cityObj, countryName }]);
+      }
     }
   };
 
   const handlePlanTrip = async (e) => {
     e.preventDefault();
     if (plannedCities.length === 0 || !startDate || !endDate) return;
-
     setLoading(true);
     try {
-      const tripData = {
-        city_ids: plannedCities.map(c => c.id),
-        start_date: startDate,
-        end_date: endDate
-      };
+      const tripData = { city_ids: plannedCities.map(c => c.id), start_date: startDate, end_date: endDate };
       const response = await tripsAPI.planMultiCountryTrip(tripData);
       onSearchResults(response.data.attractions || [], "Multi-City Route");
     } catch (err) {
-      console.error("Error planning trip:", err);
+      console.error("Error planning:", err);
     } finally {
       setLoading(false);
     }
@@ -73,81 +64,53 @@ const SearchBar = ({ onSearchResults }) => {
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 max-w-4xl mx-auto space-y-6">
-      
-      {/* שלב 1: בחירת יעד וחיפוש אטרקציות */}
       <div className="flex gap-3 items-end">
         <div className="flex-1">
-          <label className="block text-xs font-bold text-gray-500 mb-1">מדינה</label>
-          <select value={selectedCountry} onChange={(e) => setSelectedCountry(e.target.value)} className="w-full border p-2.5 rounded-lg text-sm bg-gray-50">
-            <option value="">בחר מדינה...</option>
+          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Country</label>
+          <select value={selectedCountry} onChange={(e) => setSelectedCountry(e.target.value)} className="w-full border p-2.5 rounded-lg text-sm bg-slate-50">
+            <option value="">Select...</option>
             {countries.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
-
         <div className="flex-1">
-          <label className="block text-xs font-bold text-gray-500 mb-1">עיר</label>
-          <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="w-full border p-2.5 rounded-lg text-sm bg-gray-50">
-            <option value="">בחר עיר...</option>
+          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">City</label>
+          <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="w-full border p-2.5 rounded-lg text-sm bg-slate-50">
+            <option value="">Select...</option>
             {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
-
-        {/* הכפתור הראשי שמושך את המידע האמיתי מגוגל */}
+        <div className="flex-1">
+          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Category</label>
+          <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full border p-2.5 rounded-lg text-sm bg-slate-50">
+            <option value="">All Categories</option>
+            {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+          </select>
+        </div>
+        
         <button 
           type="button" 
           onClick={handleLiveSearch} 
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-lg transition whitespace-nowrap"
+          disabled={loading}
+          className={`px-5 py-2.5 rounded-lg font-bold text-white transition ${loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}
         >
-          {loading ? 'טוען...' : 'חיפוש אטרקציות'}
+          {loading ? 'Searching...' : 'Search'}
         </button>
 
-        <button 
-          type="button" 
-          onClick={addCityToPlan} 
-          className="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2.5 rounded-lg transition whitespace-nowrap"
-        >
-          + למסלול מרובה
+        <button type="button" onClick={addCityToPlan} className="bg-slate-800 text-white font-bold px-4 py-2.5 rounded-lg hover:bg-slate-700 transition">
+          + Add
         </button>
       </div>
 
-      {/* שלב 2 (אופציונלי): בונה טיול מרובה יעדים - יופיע רק אם הוספת ערים למסלול המרובה */}
       {plannedCities.length > 0 && (
-        <form onSubmit={handlePlanTrip} className="space-y-4 pt-6 border-t mt-4">
-          <h3 className="font-bold text-slate-700">תכנון מסלול מרובה יעדים:</h3>
-          
-          <div className="space-y-3">
-            {Object.entries(plannedCities.reduce((acc, city) => {
-              (acc[city.countryName] = acc[city.countryName] || []).push(city);
-              return acc;
-            }, {})).map(([country, cityList]) => (
-              <div key={country} className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <h4 className="font-bold text-slate-800 text-sm mb-2">{country}</h4>
-                <div className="flex flex-wrap gap-2">
-                  {cityList.map(city => (
-                    <span key={city.id} className="bg-white border border-slate-200 px-3 py-1.5 rounded-full text-xs shadow-sm flex items-center">
-                      {city.name}
-                      <button type="button" onClick={() => setPlannedCities(plannedCities.filter(c => c.id !== city.id))} className="mr-2 text-red-500 font-bold hover:text-red-700">×</button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
+        <form onSubmit={handlePlanTrip} className="pt-6 border-t mt-4 space-y-4">
+          <h3 className="font-bold text-slate-800">Multi-City Planner</h3>
           <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="block text-xs font-bold text-gray-500 mb-1">תאריך התחלה</label>
-              <input type="date" required onChange={(e) => setStartDate(e.target.value)} className="w-full border p-2.5 rounded-lg text-sm" />
-            </div>
-            <div className="flex-1">
-              <label className="block text-xs font-bold text-gray-500 mb-1">תאריך חזרה</label>
-              <input type="date" required onChange={(e) => setEndDate(e.target.value)} className="w-full border p-2.5 rounded-lg text-sm" />
-            </div>
+             <input type="date" required onChange={(e) => setStartDate(e.target.value)} className="border p-2 rounded w-full" />
+             <input type="date" required onChange={(e) => setEndDate(e.target.value)} className="border p-2 rounded w-full" />
+             <button type="submit" disabled={loading} className="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-emerald-700">
+               {loading ? 'Generating...' : 'Plan Trip'}
+             </button>
           </div>
-
-          <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition shadow-sm">
-            {loading ? 'יוצר תוכנית...' : 'צור טיול כולל'}
-          </button>
         </form>
       )}
     </div>

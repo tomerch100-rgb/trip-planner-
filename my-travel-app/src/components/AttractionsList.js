@@ -101,12 +101,15 @@ const AttractionsList = ({ attractions: initialAttractions, onAddToTrip }) => {
                   <span className="truncate max-w-[150px]">{attraction.formatted_address || attraction.address}</span>
                 </div>
                 
-                <button
-                  onClick={() => onAddToTrip(attraction)}
-                  className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition text-sm font-medium shadow-sm"
-                >
-                  + הוסף לטיול
-                </button>
+               <button
+  onClick={(e) => {
+    e.preventDefault(); // מונע ריענון דף בטעות
+    onAddToTrip(attraction); // שליחת כל אובייקט האטרקציה לאבא
+  }}
+  className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition text-sm font-medium shadow-sm"
+>
+  + הוסף לטיול
+</button>
               </div>
             </div>
           ))}

@@ -12,7 +12,16 @@ function App() {
   const [currentStep, setCurrentStep] = useState('destination');
   const [liveAttractions, setLiveAttractions] = useState([]);
   const [selectedCityName, setSelectedCityName] = useState('');
-  const [myTripAttractions, setMyTripAttractions] = useState([]); 
+  
+  // ה-State האמיתי שצובר את האטרקציות שבחרת
+  const [myTripAttractions, setMyTripAttractions] = useState([]);
+  const [viewMode] = useState('all');
+
+  // פונקציית סינון שמשתמשת במידע האמיתי מה-State
+  const getMapAttractions = () => {
+    if (viewMode === 'all') return myTripAttractions;
+    return myTripAttractions.filter(attr => attr.country_id === viewMode);
+  };
 
   const handleSearchResults = (attractions, cityName) => {
     setLiveAttractions(attractions);
@@ -20,13 +29,10 @@ function App() {
     setCurrentStep('attractions');
   };
 
-  // תיקון הבעיה: הוספתי את ה-attraction כפרמטר לפונקציה
   const handleAddToTrip = (attraction) => {
-    if (!attraction || !attraction.name) return; // הגנה
-    
     if (!myTripAttractions.find(a => a.id === attraction.id)) {
-      setMyTripAttractions([...myTripAttractions, attraction]);
-      alert(`${attraction.name} הוספה לטיול!`);
+      setMyTripAttractions(prev => [...prev, attraction]);
+      alert(`${attraction.name} נוספה בהצלחה!`);
     } else {
       alert('אטרקציה זו כבר קיימת במסלול.');
     }
@@ -49,19 +55,14 @@ function App() {
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white p-4 shadow flex justify-between items-center">
         <h1 className="text-xl font-bold text-blue-600">RoamWise</h1>
-        <div className="flex gap-4">
-          <button onClick={() => setCurrentStep('destination')} className="text-sm font-bold text-slate-600 hover:text-blue-600">
-            New Search
-          </button>
-          <button onClick={handleLogout} className="text-red-500 font-bold">Sign Out</button>
-        </div>
+        <button onClick={handleLogout} className="text-red-500 font-bold">Sign Out</button>
       </header>
 
       <main className="p-8 max-w-6xl mx-auto">
         {currentStep === 'destination' && (
           <SearchBar onSearchResults={handleSearchResults} />
         )}
-
+        
         {currentStep === 'attractions' && (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Attractions in {selectedCityName}</h2>
@@ -69,20 +70,18 @@ function App() {
               attractions={liveAttractions} 
               onAddToTrip={handleAddToTrip} 
             />
-            {myTripAttractions.length > 0 && (
-              <button 
-                onClick={() => setCurrentStep('planning')}
-                className="fixed bottom-8 right-8 bg-green-600 text-white px-6 py-3 rounded-full shadow-xl hover:bg-green-700 transition"
-              >
-                Build Itinerary ({myTripAttractions.length}) ➔
-              </button>
-            )}
+            <button 
+              onClick={() => setCurrentStep('planning')} 
+              className="fixed bottom-8 right-8 bg-green-600 text-white px-6 py-3 rounded-full shadow-xl hover:bg-green-700 transition"
+            >
+              Build Itinerary ({myTripAttractions.length}) ➔
+            </button>
           </div>
         )}
 
         {currentStep === 'planning' && (
           <TripBuilder 
-            savedAttractions={myTripAttractions} 
+            savedAttractions={getMapAttractions()} 
             destinationName={selectedCityName} 
           />
         )}
