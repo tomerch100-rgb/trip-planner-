@@ -36,28 +36,11 @@ def get_categories_and_their_attractions(city_id: int, db: Session = Depends(get
 def get_attractions(
     city_id: Optional[int] = Query(None, description="סינון לפי מזהה עיר מתוך מסד הנתונים מקומי"),
     category_id: Optional[int] = Query(None, description="סינון לפי מזהה קטגוריה מתוך מסד הנתונים המקומי"),
-    max_price: Optional[float] = Query(None, description="מחיר מקסימלי לאטרקציה (סינון תקציב)"), # <-- התוספת
+    max_price: Optional[float] = Query(None, description="מחיר מקסימלי לאטרקציה (סינון תקציב)"),
     db: Session = Depends(get_db),
-    user_id: int = Depends( security.get_current_user_id)  
-
+    user_id: int = Depends(security.get_current_user_id)
 ):
-    """
-    שולף אטרקציות השמורות במסד הנתונים המקומי (PostgreSQL).
-    מאפשר סינון אופציונלי לפי עיר ו/או קטגוריה.
-    """
-    query = db.query(Attraction)
-    
-    # סינון דינמי לפי מזהה עיר
-    if city_id is not None:
-        query = query.filter(Attraction.city_id == city_id)
-        
-    # סינון דינמי לפי מזהה קטגוריה
-    if category_id is not None:
-        query = query.filter(Attraction.category_id == category_id)
-    if max_price is not None:
-        query = query.filter(Attraction.default_price <= max_price)
-        
-    return query.all()
+    return crud.get_filtered_attractions(db, city_id, category_id, max_price)
 
 @router.get("/explore-live")
 def explore_live_attractions(
@@ -69,15 +52,13 @@ def explore_live_attractions(
     if category_name and category_name.strip() == "":
         category_name = None
 
-    city = db.query(City).filter(City.id == city_id).first()
+    # 1. קוראים ל-CRUD כדי להביא את העיר
+    city = crud.get_city_by_id(db, city_id)
     if not city:
         raise HTTPException(status_code=404, detail="העיר לא נמצאה")
 
-    query = db.query(Attraction).filter(Attraction.city_id == city_id)
-    if category_name:
-        query = query.join(AttractionCategory).filter(AttractionCategory.name == category_name)
-    
-    cached_attractions = query.all()
+    # 2. קוראים ל-CRUD כדי לבדוק אם יש נתונים שמורים (Cache)
+    cached_attractions = crud.get_cached_attractions(db, city_id, category_name)
 
     if cached_attractions:
         return {
@@ -87,24 +68,11 @@ def explore_live_attractions(
             "attractions": cached_attractions
         }
 
+    # 3. אם אין ב-Cache, פונים לגוגל
     google_results = fetch_attractions_from_google(city.name, category_name)
-    saved_attractions = [] 
     
-    for item in google_results:
-        new_attr = Attraction(
-            name=item.get('name') or 'Unknown',
-            city_id=city_id,
-            address=item.get('formatted_address') or item.get('address') or 'כתובת לא ידועה',
-            default_price=item.get('price') or 0.0,
-            latitude=item.get('latitude'),
-            longitude=item.get('longitude')
-        )
-        db.add(new_attr)
-        saved_attractions.append(new_attr)
-    
-    db.commit()
-    for attr in saved_attractions:
-        db.refresh(attr)
+    # 4. קוראים ל-CRUD כדי לשמור את התוצאות החדשות
+    saved_attractions = crud.save_google_results_to_db(db, google_results, city_id)
     
     return {
         "city_searched": city.name,
@@ -112,17 +80,14 @@ def explore_live_attractions(
         "total_results": len(saved_attractions),
         "attractions": saved_attractions
     }
+
 @router.post("/", response_model=AttractionResponse, status_code=201)
 def create_attraction(
     attraction: schemas.AttractionCreate,
     db: Session = Depends(get_db),
     user_id: int = Depends(security.get_current_user_id)
 ):
-    new_attraction = Attraction(**attraction.model_dump())
-    db.add(new_attraction)
-    db.commit()
-    db.refresh(new_attraction)
-    return new_attraction
+    return crud.create_new_attraction(db, attraction)
 
 @router.get("/by-country/{country_id}", response_model=List[schemas.AttractionResponse])
 def read_attractions_by_country(country_id: int, db: Session = Depends(get_db)):
@@ -130,3 +95,15 @@ def read_attractions_by_country(country_id: int, db: Session = Depends(get_db)):
     if not attractions:
         raise HTTPException(status_code=404, detail="לא נמצאו אטרקציות במדינה זו")
     return attractions
+
+@router.get("/recommend",response_model=List[AttractionResponse]) 
+def recommended_attractions (  
+     db: Session = Depends(get_db),
+    user_id: int = Depends(security.get_current_user_id) ) :
+    top_category_id =  crud.get_user_recommendations(db,user_id)
+    if top_category_id == None:
+        return []
+    recommended_places = crud.get_attraction_suggest(db, user_id, top_category_id)
+    return recommended_places
+
+
