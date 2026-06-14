@@ -49,18 +49,20 @@ def explore_live_attractions(
     db: Session = Depends(get_db),
     user_id: int = Depends(security.get_current_user_id)
 ):
-    if category_name and category_name.strip() == "":
+    # שדרוג בטיחות: אם גיא שלח מחרוזת ריקה או רווחים, נהפוך את זה ל-None
+    if category_name is not None and category_name.strip() == "":
         category_name = None
 
-    # 1. קוראים ל-CRUD כדי להביא את העיר
     city = crud.get_city_by_id(db, city_id)
     if not city:
         raise HTTPException(status_code=404, detail="העיר לא נמצאה")
 
-    # 2. קוראים ל-CRUD כדי לבדוק אם יש נתונים שמורים (Cache)
+    # בודקים אם יש כבר אטרקציות שמורות ב-Cache לעיר הזו
     cached_attractions = crud.get_cached_attractions(db, city_id, category_name)
 
-    if cached_attractions:
+    # חוק חשוב: נחזיר מה-Cache רק אם האטרקציות השמורות מכילות קואורדינטות תקינות!
+    # זה ימנע מהנתונים הישנים והדפוקים לחזור שוב ושוב
+    if cached_attractions and cached_attractions[0].latitude is not None:
         return {
             "city_searched": city.name,
             "category": category_name,
@@ -68,10 +70,12 @@ def explore_live_attractions(
             "attractions": cached_attractions
         }
 
-    # 3. אם אין ב-Cache, פונים לגוגל
-    google_results = fetch_attractions_from_google(city.name, category_name)
+    # אם אין ב-Cache או שהנתונים ב-Cache חלקיים - פונים לקוד המושלם של גוגל
+    # אנחנו שולחים "Museums" כברירת מחדל אם המשתמש לא בחר קטגוריה, כדי שגוגל יחזיר תוצאות מעניינות
+    google_search_category = category_name if category_name else "Top Attractions"
+    google_results = fetch_attractions_from_google(city.name, google_search_category)
     
-    # 4. קוראים ל-CRUD כדי לשמור את התוצאות החדשות
+    # שמירה ב-DB דרך ה-CRUD
     saved_attractions = crud.save_google_results_to_db(db, google_results, city_id)
     
     return {

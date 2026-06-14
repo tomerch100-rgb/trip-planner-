@@ -5,6 +5,7 @@ import RegisterForm from './components/RegisterForm';
 import SearchBar from './components/SearchBar';
 import AttractionsList from './components/AttractionsList';
 import TripBuilder from './components/TripBuilder';
+import 'leaflet/dist/leaflet.css'; 
 
 function App() {
   const { user, logout } = useContext(AuthContext); 

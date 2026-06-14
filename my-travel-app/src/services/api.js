@@ -24,6 +24,9 @@ export const attractionsAPI = {
   // שליפת קטגוריות לתפריט סינון
   getCategories: () => API.get('/attractions/categories'),
 
+  // שליפת המלצות אישיות על בסיס היסטוריית המשתמש 🌟
+  getRecommendations: () => API.get('/attractions/recommend'),
+
   // חיפוש אטרקציות מסוננות מה-DB המקומי
   getAttractions: (cityId, categoryId, maxPrice) => {
     return API.get('/attractions/', { 

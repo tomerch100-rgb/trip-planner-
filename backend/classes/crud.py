@@ -6,6 +6,9 @@ from backend.core import security
 from typing import List
 from fastapi import HTTPException
 from typing import Optional
+from datetime import date
+
+
 def get_user_by_email(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
@@ -102,24 +105,36 @@ def create_new_attraction(db: Session, attraction_data: schemas.AttractionCreate
     return new_attraction
 
 def save_google_results_to_db(db: Session, google_results: list, city_id: int):
+    """
+    מקבל את רשימת האטרקציות הגולמית מגוגל, יוצר מהן אובייקטים של המסד,
+    שומר אותם ב-DB ומחזיר את הרשימה של האטרקציות השמורות.
+    """
     saved_attractions = [] 
     
     for item in google_results:
+        # חילוץ קואורדינטות חכם: בודק אם זה מגיע במבנה של גוגל, או ישירות כמפתח
+        geometry = item.get('geometry', {})
+        location = geometry.get('location', {})
+        
+        lat = location.get('lat') or item.get('latitude') or item.get('lat')
+        lng = location.get('lng') or item.get('longitude') or item.get('lng')
+        
         new_attr = models.Attraction(
             name=item.get('name') or 'Unknown',
             city_id=city_id,
             address=item.get('formatted_address') or item.get('address') or 'כתובת לא ידועה',
             default_price=item.get('price') or 0.0,
-            latitude=item.get('latitude'),
-            longitude=item.get('longitude')
+            latitude=lat, 
+            longitude=lng 
         )
         db.add(new_attr)
         saved_attractions.append(new_attr)
+    
     db.commit()
     
     for attr in saved_attractions:
         db.refresh(attr)
-
+        
     return saved_attractions
 
 
@@ -209,16 +224,10 @@ def get_attractions_by_country(db: Session, country_id: int):
 def get_category_id_by_name(db: Session, category_name: str):
     if not category_name:
         return None
-    # מחפשים את הקטגוריה לפי שם
     cat = db.query(models.AttractionCategory).filter(
         models.AttractionCategory.name.ilike(category_name) # ilike עוזר למנוע בעיות של אותיות גדולות/קטנות
     ).first()
     return cat.id if cat else None
-
-def get_user_recommendations (db: Session , user_id: int ) : 
-    from sqlalchemy import func
-from datetime import date
-from backend.classes import models # בהנחה שככה אתה מייבא את המודלים
 
 def get_user_recommendations(db: Session, user_id: int): 
     today = date.today()
@@ -226,14 +235,22 @@ def get_user_recommendations(db: Session, user_id: int):
         models.Attraction.category_id,
         func.count(models.Attraction.category_id).label("cat_count")
     )
-    query = query.join(models.TripItinerary).join(models.Trip)
+    query = query.join(
+        models.TripItinerary, 
+        models.Attraction.id == models.TripItinerary.attraction_id
+    ).join(models.Trip)
+
     query = query.filter(models.Trip.user_id == user_id)
     query = query.filter(models.TripItinerary.visit_date < today)
-    top_category = query.group_by(models.Attraction.category_id).order_by(func.count(models.Attraction.category_id).desc()).first()
+
+    top_category = (
+        query.group_by(models.Attraction.category_id)
+        .order_by(func.count(models.Attraction.category_id).desc())
+        .first()
+    )
     if top_category:
         return top_category.category_id
-    else:
-        return None
+    return None
 
 def get_attraction_suggest (db:Session, user_id:int,top_catergory_id:int)  : 
     visited_attraction_ids = (
@@ -245,3 +262,17 @@ def get_attraction_suggest (db:Session, user_id:int,top_catergory_id:int)  :
 
     new_places = db.query(models.Attraction).filter(models.Attraction.category_id == top_catergory_id).filter(models.Attraction.id. notin_(visited_attraction_ids)) .all()
     return new_places
+
+def get_city_by_id(db: Session, city_id: int):
+    """שולף עיר לפי ה-ID שלה"""
+    return db.query(models.City).filter(models.City.id == city_id).first()
+
+def get_cached_attractions(db: Session, city_id: int, category_name: Optional[str] = None):
+    """בודק אם יש כבר אטרקציות שמורות במסד לעיר ולקטגוריה הזו"""
+    query = db.query(models.Attraction).filter(models.Attraction.city_id == city_id)
+    
+    # הוספנו בדיקה שהקטגוריה היא לא רק None, אלא גם לא מחרוזת ריקה או רווחים
+    if category_name and category_name.strip() != "":
+        query = query.join(models.AttractionCategory).filter(models.AttractionCategory.name == category_name)
+        
+    return query.all()

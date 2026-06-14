@@ -1,116 +1,90 @@
-import React, { useState, useEffect } from 'react';
-import { attractionsAPI } from '../services/api';
+import React, { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import L from 'leaflet';
 
-const AttractionsList = ({ attractions: initialAttractions, onAddToTrip }) => {
-  const [categories, setCategories] = useState([]); 
-  const [selectedCategory, setSelectedCategory] = useState(''); 
-  const [displayedAttractions, setDisplayedAttractions] = useState([]); 
+// תיקון טעינת הניעוצים (הסיכות הכחולות) בריאקט
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.71.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.71.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.71.1/images/marker-shadow.png',
+});
 
-  // טעינת קטגוריות מהשרת עבור הסינון
+// קומפוננטת עזר פנימית שמזיזה וממרכזת את המפה אוטומטית לפי הסיכות שנוספו
+const RecenterMap = ({ positions }) => {
+  const map = useMap();
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const response = await attractionsAPI.getCategories();
-        setCategories(response.data || []);
-      } catch (err) {
-        console.error("Failed to load categories:", err);
+    if (positions.length > 0) {
+      if (positions.length === 1) {
+        map.setView(positions[0], 13);
+      } else {
+        map.fitBounds(positions, { padding: [50, 50] });
       }
-    };
-    loadCategories();
-  }, []);
-
-  // עדכון רשימת האטרקציות כשהחיפוש מתעדכן
-  useEffect(() => {
-    setDisplayedAttractions(initialAttractions || []);
-    setSelectedCategory(''); 
-  }, [initialAttractions]);
-
-  // לוגיקת הסינון מקומית
-  const handleCategoryChange = (e) => {
-    const catId = e.target.value;
-    setSelectedCategory(catId);
-
-    if (!catId || catId === '') {
-      setDisplayedAttractions(initialAttractions || []);
-    } else {
-      const filtered = (initialAttractions || []).filter(attr => 
-        attr.category_id === parseInt(catId)
-      );
-      setDisplayedAttractions(filtered);
     }
-  };
-
-  // מונע תצוגה ריקה כשעוד לא חיפשנו כלום
-  if (!Array.isArray(initialAttractions) || initialAttractions.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="space-y-6">
-      
-      {/* תפריט הסינון */}
-      {categories.length > 0 && (
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700">סינון לפי קטגוריות</h3>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <select
-              value={selectedCategory}
-              onChange={handleCategoryChange}
-              className="p-2 border border-gray-300 rounded-md bg-white text-gray-700 shadow-sm text-sm min-w-[200px]"
-            >
-              <option value="">כל הקטגוריות (ללא סינון)</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
-
-      {/* רשימת האטרקציות (ללא מפה! פריסה רחבה של כרטיסיות) */}
-      {displayedAttractions.length === 0 ? (
-        <div className="text-center py-10 text-gray-400">
-          <p className="text-sm font-medium">לא נמצאו אטרקציות בקטגוריה זו.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayedAttractions.map((attraction, index) => (
-            <div 
-              key={attraction.id || index} 
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col justify-between hover:shadow-md transition-shadow"
-            >
-              <div>
-                <h4 className="text-lg font-semibold text-gray-800 mb-2">{attraction.name}</h4>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                  {attraction.editorial_summary || attraction.description || 'אין תיאור זמין עבור אטרקציה זו.'}
-                </p>
-              </div>
-              
-              <div className="mt-auto">
-                <div className="pt-3 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500 mb-4">
-                  <span>⭐ {attraction.rating || 'אין דירוג'}</span>
-                  <span className="truncate max-w-[150px]">{attraction.formatted_address || attraction.address}</span>
-                </div>
-                
-                {/* כפתור ההוספה */}
-                <button
-                  onClick={() => onAddToTrip(attraction)}
-                  className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition text-sm font-medium"
-                >
-                  + הוסף לטיול
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  }, [positions, map]);
+  return null;
 };
 
-export default AttractionsList;
+export default function MapView({ attractions = [] }) {
+  // סינון אטרקציות שיש להן מיקום תקין והמרה למספרים עשרוניים
+  const validAttractions = attractions.filter(
+    attr => attr && attr.latitude && attr.longitude
+  );
+
+  const validPositions = validAttractions.map(attr => [
+    parseFloat(attr.latitude),
+    parseFloat(attr.longitude),
+  ]);
+
+  // נקודת ברירת מחדל אם המערך ריק
+  const defaultCenter = [36.4751, 2.8276];
+  const mapCenter = validPositions.length > 0 ? validPositions[0] : defaultCenter;
+
+  return (
+    // הסטייל כאן מכריח את המפה לקבל גובה של 400 פיקסלים ולא להישאר מכווצת
+    <div style={{ height: "400px", width: "100%", position: "relative" }} className="rounded-xl overflow-hidden shadow-md border border-gray-200 z-0">
+      <MapContainer
+        center={mapCenter}
+        zoom={12}
+        style={{ height: "100%", width: "100%" }}
+        scrollWheelZoom={true}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        />
+
+        {/* הזזה אוטומטית של הפוקוס */}
+        <RecenterMap positions={validPositions} />
+
+        {/* קו מסלול שמחבר בין האטרקציות בלו"ז */}
+        {validPositions.length > 1 && (
+          <Polyline
+            positions={validPositions}
+            pathOptions={{ color: '#2563eb', weight: 4, dashArray: '5, 10' }}
+          />
+        )}
+
+        {/* יצירת הסיכות (Markers) על המפה */}
+        {validAttractions.map((attr, idx) => (
+          <Marker
+            key={attr.id || idx}
+            position={[parseFloat(attr.latitude), parseFloat(attr.longitude)]}
+          >
+            <Popup>
+              <div className="text-right font-sans p-1" dir="rtl">
+                <h5 className="font-bold text-gray-900 text-sm mb-0.5">{attr.name}</h5>
+                <p className="text-gray-500 text-xs my-0">{attr.address || 'אין כתובת זמינה'}</p>
+                {attr.day_number && (
+                  <span className="inline-block bg-blue-100 text-blue-800 text-[10px] font-bold px-1.5 py-0.5 rounded mt-1">
+                    יום {attr.day_number} - {attr.start_time}
+                  </span>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+    </div>
+  );
+}
