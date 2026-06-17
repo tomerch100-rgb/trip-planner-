@@ -53,7 +53,7 @@ const SearchBar = ({ onSearchResults }) => {
       const cityObj = cities.find(c => c.id.toString() === selectedCity.toString());
       const cityName = cityObj ? cityObj.name : "היעד הנבחר";
 
-      // 🟢 התיקון: במקום setLiveAttractions, אנחנו שולחים את המידע לאבא (App.js)
+      // - התיקון: במקום setLiveAttractions, אנחנו שולחים את המידע לאבא (App.js)
       if (onSearchResults) {
         onSearchResults(response.data || [], cityName);
       }

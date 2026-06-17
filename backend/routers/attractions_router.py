@@ -50,10 +50,10 @@ def get_attractions(
     return crud.get_filtered_attractions(db, city_id, category_id, max_price)
 
 
-@router.get("/explore-live", response_model=list[schemas.AttractionResponse])  # 🟢 וידוא שהמודל מצפה לרשימה שטוחה
+@router.get("/explore-live", response_model=list[schemas.AttractionResponse])  # - וידוא שהמודל מצפה לרשימה שטוחה
 def explore_live_attractions(
     city_id: int,
-    categories: Optional[str] = Query(None),  # 🟢 שם הפרמטר המעודכן
+    categories: Optional[str] = Query(None),  # - שם הפרמטר המעודכן
     db: Session = Depends(get_db),
     user_id: int = Depends(security.get_current_user_id)
 ):
@@ -62,7 +62,7 @@ def explore_live_attractions(
     Checks the local cache first, and falls back to live API fetching if necessary.
     """
     
-    # 🟢 תיקון השגיאה: שינוי מ-category_name ל-categories
+    #  תיקון השגיאה: שינוי מ-category_name ל-categories
     if categories is not None and categories.strip() == "":
         categories = None
 
@@ -70,16 +70,15 @@ def explore_live_attractions(
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
 
-    # 🟢 שינוי ל-categories בשליפה מהמטמון
+    #  שינוי ל-categories בשליפה מהמטמון
     cached_attractions = crud.get_cached_attractions(db, city_id, categories)
 
     # Strict Cache Rule: Only return cached data if it contains valid coordinates (latitude).
     if cached_attractions and cached_attractions[0].latitude is not None:
-        # 🟢 התיקון: מחזירים רשימה שטוחה גם מה-Cache כדי שלא יתרסק ב-React או ב-Validation
+        # התיקון: מחזירים רשימה שטוחה גם מה-Cache כדי שלא יתרסק ב-React או ב-Validation
         return cached_attractions
 
     # Cache miss or incomplete data: Fetch fresh data from Google Places API.
-    # 🟢 שינוי ל-categories
     google_search_category = categories if categories else "Top Attractions"
     google_results = fetch_attractions_from_google(city.name, google_search_category)
     
