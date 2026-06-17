@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from backend.classes import schemas,crud
+from backend.classes import schemas,crud 
 from backend.core import security
 from backend.DB.db import get_db 
 # ייבוא מודלי ה-ORM (מסד הנתונים)
@@ -42,48 +42,37 @@ def get_attractions(
 ):
     return crud.get_filtered_attractions(db, city_id, category_id, max_price)
 
-@router.get("/explore-live")
+@router.get("/explore-live", response_model=List[schemas.AttractionResponse])
 def explore_live_attractions(
     city_id: int,
-    category_name: Optional[str] = Query(None),
+    categories: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     user_id: int = Depends(security.get_current_user_id)
 ):
-    # שדרוג בטיחות: אם גיא שלח מחרוזת ריקה או רווחים, נהפוך את זה ל-None
-    if category_name is not None and category_name.strip() == "":
-        category_name = None
+    # 1. ניקוי קלט
+    if categories is not None and categories.strip() == "":
+        categories = None
 
     city = crud.get_city_by_id(db, city_id)
     if not city:
         raise HTTPException(status_code=404, detail="העיר לא נמצאה")
 
-    # בודקים אם יש כבר אטרקציות שמורות ב-Cache לעיר הזו
-    cached_attractions = crud.get_cached_attractions(db, city_id, category_name)
-
-    # חוק חשוב: נחזיר מה-Cache רק אם האטרקציות השמורות מכילות קואורדינטות תקינות!
-    # זה ימנע מהנתונים הישנים והדפוקים לחזור שוב ושוב
+    # 2. ניסיון שליפה מ-Cache
+    cached_attractions = crud.get_cached_attractions(db, city_id, categories)
+    
     if cached_attractions and cached_attractions[0].latitude is not None:
-        return {
-            "city_searched": city.name,
-            "category": category_name,
-            "total_results": len(cached_attractions),
-            "attractions": cached_attractions
-        }
+        # כאן התיקון: מחזירים רק את הרשימה, לא מילון עם מפתחות!
+        return cached_attractions
 
-    # אם אין ב-Cache או שהנתונים ב-Cache חלקיים - פונים לקוד המושלם של גוגל
-    # אנחנו שולחים "Museums" כברירת מחדל אם המשתמש לא בחר קטגוריה, כדי שגוגל יחזיר תוצאות מעניינות
-    google_search_category = category_name if category_name else "Top Attractions"
+    # 3. פנייה לגוגל אם אין ב-Cache
+    google_search_category = categories if categories else "Top Attractions"
     google_results = fetch_attractions_from_google(city.name, google_search_category)
     
-    # שמירה ב-DB דרך ה-CRUD
+    # 4. שמירה ב-DB והחזרת הרשימה
     saved_attractions = crud.save_google_results_to_db(db, google_results, city_id)
     
-    return {
-        "city_searched": city.name,
-        "category": category_name,
-        "total_results": len(saved_attractions),
-        "attractions": saved_attractions
-    }
+    # הנה זה - מחזירים רשימה נטו, שזה בדיוק מה שה-response_model מצפה לו
+    return saved_attractions
 
 @router.post("/", response_model=AttractionResponse, status_code=201)
 def create_attraction(
@@ -109,5 +98,13 @@ def recommended_attractions (
         return []
     recommended_places = crud.get_attraction_suggest(db, user_id, top_category_id)
     return recommended_places
-
-
+@router.post("/save-google-results")
+def save_results(city_id: int, results: list, db: Session = Depends(get_db)):
+    # דיבאג: מה באמת קיבלנו?
+    if results and len(results) > 0:
+        print(f"DEBUG: המקום הראשון שקיבלתי הוא: {results[0].keys()}") 
+        # נבדוק אם יש בכלל שדה שנקרא 'categories' או 'types'
+        print(f"DEBUG: הדגימה הראשונה: {results[0]}")
+    
+    saved_attractions = crud.save_google_results_to_db(db, results, city_id)
+    return {"message": "בוצע", "count": len(saved_attractions)}

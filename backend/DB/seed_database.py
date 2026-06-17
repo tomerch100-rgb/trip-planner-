@@ -4,12 +4,12 @@ from backend.DB.db import SessionLocal
 from backend.classes.models import Country, City
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-API_URL = "https://countriesnow.space/api/v0.1/countries"
+countriesnow_API_URL = "https://countriesnow.space/api/v0.1/countries"
 
 def fetch_geography_data():
     logging.info("שואב נתונים מה-API החיצוני...")
     try:
-        response = requests.get(API_URL)
+        response = requests.get(countriesnow_API_URL)
         if response.status_code == 200:
             return response.json()["data"]
         return None

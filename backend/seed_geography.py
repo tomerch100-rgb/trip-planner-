@@ -3,7 +3,7 @@ import requests
 from sqlalchemy.orm import Session
 
 # Importing database connection and your specific models
-from DB.db import SessionLocal
+from backend.DB.db import SessionLocal
 from backend.classes.models import Country, City
 
 # Configure logging to monitor progress in the terminal
@@ -32,7 +32,7 @@ def fetch_geography_data():
 def seed_database():
     """
     Main function to populate the database with countries and cities.
-    Processes the first 5 countries to ensure a fast and safe initial run.
+    Processes ALL countries from the API efficiently.
     """
     raw_data = fetch_geography_data()
     if not raw_data:
@@ -43,50 +43,51 @@ def seed_database():
     db: Session = SessionLocal()
     
     try:
-        logging.info("Starting database seeding process...")
+        logging.info("Starting database seeding process for ALL countries...")
         
-        # Slicing the first 5 countries for initial testing and validation
-        for item in raw_data[:5]:
+        # שלפנו מראש את המדינות והערים שכבר קיימות כדי לא לעשות שאילתות בלולאה (חוסך המון זמן רשת מול Neon)
+        existing_countries_dict = {c.name: c.id for c in db.query(Country).all()}
+        
+        # לולאה על כל המדינות בעולם (הסרנו את ה- :5)
+        for item in raw_data:
             country_name = item["country"]
             country_code = item.get("iso2", "XX")
             cities_list = item["cities"]
             
-            # Check if the country already exists to prevent duplicate entries
-            existing_country = db.query(Country).filter(Country.name == country_name).first()
-            
-            if not existing_country:
+            # בדיקה מהירה מהזיכרון המקומי במקום שאילתה למסד הנתונים
+            if country_name not in existing_countries_dict:
                 new_country = Country(name=country_name, country_code=country_code)
                 db.add(new_country)
-                db.flush()  # Flushes the session to generate the Country ID immediately
+                db.flush()  # מייצר ID מיידי
                 country_id = new_country.id
+                existing_countries_dict[country_name] = country_id
                 logging.info(f"Inserted country: {country_name}")
             else:
-                country_id = existing_country.id
-                logging.info(f"Country '{country_name}' already exists in database.")
+                country_id = existing_countries_dict[country_name]
 
-            # Prepare list of cities to add for this country
+            # שליפת הערים שכבר קיימות במאגר למדינה הזו (למניעת כפילויות בריצה חוזרת)
+            existing_cities = set(res[0] for res in db.query(City.name).filter(City.country_id == country_id).all())
+
+            # הכנת רשימת הערים החדשות
             cities_to_add = []
             for city_name in cities_list:
-                # Check for duplicate cities within the same country
-                existing_city = db.query(City).filter(City.country_id == country_id, City.name == city_name).first()
-                if not existing_city:
+                if city_name and city_name not in existing_cities:
                     cities_to_add.append(City(name=city_name, country_id=country_id))
+                    existing_cities.add(city_name) # מונע כפילויות בתוך אותו המערך החיצוני
             
-            # Efficiently bulk insert all new cities for performance optimization
+            # bulk insert מהיר לכל עיר ועיר
             if cities_to_add:
                 db.bulk_save_objects(cities_to_add)
                 logging.info(f"Bulk inserted {len(cities_to_add)} cities for {country_name}")
         
-        # Commit all changes to the PostgreSQL database
+        # שמירת כל השינויים בצורה סופית
         db.commit()
-        logging.info("Database seeding completed successfully!")
+        logging.info("Database seeding completed successfully for the entire world!")
         
     except Exception as e:
-        # Rollback the transaction in case of any database error
         db.rollback()
         logging.error(f"Error occurred during database seeding: {e}")
     finally:
-        # Always close the database session when done
         db.close()
 
 if __name__ == "__main__":

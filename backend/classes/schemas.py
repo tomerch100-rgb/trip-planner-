@@ -29,12 +29,6 @@ class MultiCityTripRequest(BaseModel):
     start_date: date
     end_date: date
 
-class AttractionResponse(BaseModel):
-    id: int
-    name: str
-    city_id: int | None = None
-    model_config = ConfigDict(from_attributes=True)
-
 class TripWithAttractionsResponse(TripResponse):
     attractions: List[AttractionResponse] = []
     model_config = ConfigDict(from_attributes=True)
@@ -48,11 +42,19 @@ class AttractionCreate(BaseModel):
     latitude: Optional[float] = Field(None, description="קואורדינטת קו רוחב")
     longitude: Optional[float] = Field(None, description="קואורדינטת קו אורך")
 
-class AttractionResponse(AttractionCreate):
+class AttractionResponse(BaseModel):
     id: int
-    city_id: int | None = None
+    name: str
+    address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    rating: Optional[float] = None
+    
+    # 🟢 תוודא שהשורה הזו קיימת! אחרת React לא יקבל את הקטגוריה
+    category_id: Optional[int] = None 
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
 
 # --- Trip Itinerary (לו"ז יומי) Schemas ---
 class ItineraryCreate(BaseModel):
@@ -66,13 +68,11 @@ class ItineraryCreate(BaseModel):
 class ItineraryResponse(ItineraryCreate):
     id: int
     next_recommended_attraction_id: Optional[int] = None
-
     model_config = ConfigDict(from_attributes=True)
 
 class CategoryResponse(BaseModel):
     id: int
     name: str
-    
     model_config = ConfigDict(from_attributes=True)
 
 class BulkItineraryCreate(BaseModel):
@@ -94,6 +94,5 @@ class CategoryWithAttractionsResponse(BaseModel):
     id: int
     name: str
     attractions: List[AttractionResponse] = []
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True

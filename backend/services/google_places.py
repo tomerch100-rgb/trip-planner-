@@ -9,17 +9,13 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_PLACES_API_KEY")
 GOOGLE_PLACES_URL = "https://places.googleapis.com/v1/places:searchText"
 
 def fetch_attractions_from_google(city_name: str, category_name: str):
-    """
-    פונקציה הפונה ל-Google Places API ומחזירה אטרקציות לפי עיר וקטגוריה, כולל מיקום גיאוגרפי
-    """
     search_query = f"{category_name} in {city_name}"
     
-    # הגדרת הכותרות - הוספנו את places.location ל-FieldMask
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": GOOGLE_API_KEY,
-        # places.location דואג שגוגל יחזיר לנו את ה-latitude וה-longitude
-        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.rating,places.location"
+        # הוספנו בסוף השורה את places.types כדי שגוגל ישלח את סוג המקום!
+        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.rating,places.location,places.types"
     }
     
     body = {
@@ -44,9 +40,10 @@ def fetch_attractions_from_google(city_name: str, category_name: str):
                     "google_place_id": place.get("id"),
                     "name": place.get("displayName", {}).get("text"),
                     "address": place.get("formattedAddress"),
+                    "categories": place.get("types", []),
                     "rating": place.get("rating", 0.0),
-                    "latitude": lat,   # <-- הנתון החדש שנשלח לפרונט
-                    "longitude": lng   # <-- הנתון החדש שנשלח לפרונט
+                    "latitude": lat,  
+                    "longitude": lng   
                 })
             return formatted_attractions
         else:
