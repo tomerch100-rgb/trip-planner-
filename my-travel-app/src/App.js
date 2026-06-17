@@ -15,10 +15,11 @@ function App() {
   const [selectedCityName, setSelectedCityName] = useState('');
   const [myTripAttractions, setMyTripAttractions] = useState([]); 
 
-  const handleSearchResults = (attractions, cityName) => {
-    setLiveAttractions(attractions);
+const handleSearchResults = (attractionsData, cityName) => {
+    // כאן האבא מקבל את המערך של 20 האטרקציות ומעדכן את הסטייט שלו!
+    setLiveAttractions(attractionsData || []);
     setSelectedCityName(cityName);
-    setCurrentStep('attractions');
+    setCurrentStep('attractions'); // מעביר את המסך לכרטיסיות
   };
 
   // תיקון הבעיה: הוספתי את ה-attraction כפרמטר לפונקציה
@@ -58,11 +59,13 @@ function App() {
         </div>
       </header>
 
-      <main className="p-8 max-w-6xl mx-auto">
+     <main className="p-8 max-w-6xl mx-auto">
+        {/* שלב 1: הצגת רכיב החיפוש */}
         {currentStep === 'destination' && (
           <SearchBar onSearchResults={handleSearchResults} />
         )}
 
+        {/* שלב 2: תצוגת הכרטיסיות */}
         {currentStep === 'attractions' && (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Attractions in {selectedCityName}</h2>
@@ -81,6 +84,7 @@ function App() {
           </div>
         )}
 
+        {/* שלב 3: תכנון הלו"ז והמסלול */}
         {currentStep === 'planning' && (
           <TripBuilder 
             savedAttractions={myTripAttractions} 

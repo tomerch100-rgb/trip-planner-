@@ -50,10 +50,10 @@ def get_attractions(
     return crud.get_filtered_attractions(db, city_id, category_id, max_price)
 
 
-@router.get("/explore-live",response_model = schemas.ExploreLiveResponse )
+@router.get("/explore-live", response_model=list[schemas.AttractionResponse])  # 🟢 וידוא שהמודל מצפה לרשימה שטוחה
 def explore_live_attractions(
     city_id: int,
-    categories: Optional[str] = Query(None),
+    categories: Optional[str] = Query(None),  # 🟢 שם הפרמטר המעודכן
     db: Session = Depends(get_db),
     user_id: int = Depends(security.get_current_user_id)
 ):
@@ -62,36 +62,31 @@ def explore_live_attractions(
     Checks the local cache first, and falls back to live API fetching if necessary.
     """
     
-    # Security/Validation: Normalize empty or whitespace-only category strings to None
-    if category_name is not None and category_name.strip() == "":
-        category_name = None
+    # 🟢 תיקון השגיאה: שינוי מ-category_name ל-categories
+    if categories is not None and categories.strip() == "":
+        categories = None
 
     city = crud.get_city_by_id(db, city_id)
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
 
-    # Check the local database cache for this specific city and category combination
-    cached_attractions = crud.get_cached_attractions(db, city_id, category_name)
+    # 🟢 שינוי ל-categories בשליפה מהמטמון
+    cached_attractions = crud.get_cached_attractions(db, city_id, categories)
 
     # Strict Cache Rule: Only return cached data if it contains valid coordinates (latitude).
-    # This prevents legacy/corrupted data without map coordinates from surfacing to the frontend.
     if cached_attractions and cached_attractions[0].latitude is not None:
-        return {
-            "city_searched": city.name,
-            "category": category_name,
-            "total_results": len(cached_attractions),
-            "attractions": cached_attractions
-        }
+        # 🟢 התיקון: מחזירים רשימה שטוחה גם מה-Cache כדי שלא יתרסק ב-React או ב-Validation
+        return cached_attractions
 
     # Cache miss or incomplete data: Fetch fresh data from Google Places API.
-    # Defaulting to "Top Attractions" if the user didn't specify a category to ensure rich results.
-    google_search_category = category_name if category_name else "Top Attractions"
+    # 🟢 שינוי ל-categories
+    google_search_category = categories if categories else "Top Attractions"
     google_results = fetch_attractions_from_google(city.name, google_search_category)
     
     # Persist the newly fetched Google data into the local PostgreSQL database
     saved_attractions = crud.save_google_results_to_db(db, google_results, city_id)
     
-    # הנה זה - מחזירים רשימה נטו, שזה בדיוק מה שה-response_model מצפה לו
+    # מחזירים רשימה נטו, שזה בדיוק מה שה-response_model וה-Frontend מצפים לו
     return saved_attractions
 
 

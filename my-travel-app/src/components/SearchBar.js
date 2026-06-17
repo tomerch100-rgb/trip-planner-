@@ -42,26 +42,25 @@ const SearchBar = ({ onSearchResults }) => {
     if (!selectedCity) return;
     setLoading(true);
     try {
-      // 1. נחלץ את כל ה-googleTypes של הקטגוריות שהמשתמש סימן בפרונט
       const activeGoogleTypes = TRAVEL_CATEGORIES
         .filter(cat => selectedCategories.includes(cat.id))
         .flatMap(cat => cat.googleTypes);
 
-      // 2. נהפוך את המערך למחרוזת מופרדת בפסיקים עבור ה-API (למשל: "museum,park,cafe")
-      // אם המשתמש לא בחר כלום, נשלח מחרוזת ריקה כדי לקבל הכל
       const categoriesParam = activeGoogleTypes.join(',');
 
-      // 3. נשלח את הפרמטר האמיתי ל-Backend במקום המחרוזת הריקה שהייתה קודם!
       const response = await attractionsAPI.exploreLive(selectedCity, categoriesParam);
       
-      // חילוץ שם העיר כדי שהכותרת תיראה טוב
       const cityObj = cities.find(c => c.id.toString() === selectedCity.toString());
       const cityName = cityObj ? cityObj.name : "היעד הנבחר";
 
-      onSearchResults(response.data.attractions || [], cityName);
+      // 🟢 התיקון: במקום setLiveAttractions, אנחנו שולחים את המידע לאבא (App.js)
+      if (onSearchResults) {
+        onSearchResults(response.data || [], cityName);
+      }
+
     } catch (err) {
       console.error("Error doing live search:", err);
-      alert("הייתה בעיה בחיפוש האטרקציות. ודא שהשרת פועל.");
+      alert("הייתה בעיה בחיפוש. ודא שהשרת פועל.");
     } finally {
       setLoading(false);
     }
