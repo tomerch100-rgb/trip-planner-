@@ -38,10 +38,9 @@ def authenticate_user(db: Session, user_login: schemas.UserLogin):
     return user
 
 def create_trip(db: Session, trip: schemas.TripCreate, user_id: int):
-    # trip.country_id מגיע מתוך ה-Schema המעודכן שלך
     new_trip = models.Trip(
-        city_id=trip.city_id,      # יכול להיות None
-        country_id=trip.country_id, # הוספנו את זה
+        city_id=trip.city_id,       # Allowed to be None for broader regional trips
+        country_id=trip.country_id, # Extracted from the updated schema
         start_date=trip.start_date,
         end_date=trip.end_date,
         user_id=user_id
@@ -54,47 +53,43 @@ def create_trip(db: Session, trip: schemas.TripCreate, user_id: int):
 def get_user_trips(db: Session, user_id: int):
     return db.query(models.Trip).filter(models.Trip.user_id == user_id).all()
 
-
 def get_attractions_by_city(db: Session, city_id: int):
-
     return db.query(models.Attraction).filter(models.Attraction.city_id == city_id).all()
 
-
-
 def get_attractions_by_category(db: Session, city_id: int, category_name: str):
-    # כאן אנחנו מסננים לפי city_id וגם לפי שם הקטגוריה
+    # Inner join with Category to ensure we filter precisely by both city and exact category name
     return db.query(models.Attraction).join(models.Category).filter(
         models.Attraction.city_id == city_id,
         models.Category.name == category_name
     ).all()
 
-# פונקציות ניהול לו"ז יומי ()
+# --- Itinerary Management ---
 
 def add_bulk_itinerary(db: Session, items: List[schemas.ItineraryCreate]):
-    # 1. שליפת כל הלו"ז הקיים לאותו טיול כדי לבדוק התנגשויות
+    # 1. Fetch existing itinerary items for this trip to check for scheduling conflicts
     trip_id = items[0].trip_id
     existing_items = db.query(models.TripItinerary).filter(
         models.TripItinerary.trip_id == trip_id
     ).all()
     
-    # 2. בדיקת התנגשויות
+    # 2. Collision detection loop
     for new_item in items:
         for existing in existing_items:
-            # בודקים אם זה באותו יום
+            # Check if the events are scheduled on the exact same date
             if new_item.visit_date == existing.visit_date:
-                # בודקים אם הטווחים חופפים:
+                # Time overlap logic: (New start < Existing end) AND (New end > Existing start)
                 if new_item.start_time < existing.end_time and new_item.end_time > existing.start_time:
-                    raise HTTPException (
+                    raise HTTPException(
                         status_code=400, 
-                        detail=f"התנגשות בשעות: ביום {new_item.visit_date} האטרקציה חופפת ללוז"
+                        detail=f"Scheduling conflict: The attraction on {new_item.visit_date} overlaps with an existing itinerary item."
                     )
-    # 3. אם הכל תקין, מכניסים את הכל
+                    
+    # 3. Validation passed. Execute a bulk insert to optimize database round-trips
     itinerary_items = [models.TripItinerary(**item.model_dump()) for item in items]
     db.bulk_save_objects(itinerary_items)
     db.commit()
     return itinerary_items
     
-
 def create_new_attraction(db: Session, attraction_data: schemas.AttractionCreate):
     new_attraction = models.Attraction(**attraction_data.model_dump())
     
@@ -106,13 +101,14 @@ def create_new_attraction(db: Session, attraction_data: schemas.AttractionCreate
 
 def save_google_results_to_db(db: Session, google_results: list, city_id: int):
     """
-    מקבל את רשימת האטרקציות הגולמית מגוגל, יוצר מהן אובייקטים של המסד,
-    שומר אותם ב-DB ומחזיר את הרשימה של האטרקציות השמורות.
+    Parses raw Google Places API results, maps them to database models, 
+    persists them, and returns the newly created attraction records.
     """
     saved_attractions = [] 
     
     for item in google_results:
-        # חילוץ קואורדינטות חכם: בודק אם זה מגיע במבנה של גוגל, או ישירות כמפתח
+        # Smart coordinate extraction: handles both nested 'geometry' objects 
+        # (standard Google Places structure) and flat key-value pairs
         geometry = item.get('geometry', {})
         location = geometry.get('location', {})
         
@@ -122,7 +118,7 @@ def save_google_results_to_db(db: Session, google_results: list, city_id: int):
         new_attr = models.Attraction(
             name=item.get('name') or 'Unknown',
             city_id=city_id,
-            address=item.get('formatted_address') or item.get('address') or 'כתובת לא ידועה',
+            address=item.get('formatted_address') or item.get('address') or 'Unknown address',
             default_price=item.get('price') or 0.0,
             latitude=lat, 
             longitude=lng 
@@ -137,7 +133,6 @@ def save_google_results_to_db(db: Session, google_results: list, city_id: int):
         
     return saved_attractions
 
-
 def get_filtered_attractions(
     db: Session, 
     city_id: Optional[int] = None, 
@@ -145,7 +140,8 @@ def get_filtered_attractions(
     max_price: Optional[float] = None
 ):
     """
-    שולף אטרקציות מהמסד ומסנן אותן דינמית רק לפי הפרמטרים שנשלחו
+    Fetches attractions and applies dynamic filtering based on provided parameters.
+    Builds the query incrementally to ensure optimal SQL execution.
     """
     query = db.query(models.Attraction)
     
@@ -160,12 +156,11 @@ def get_filtered_attractions(
         
     return query.all()
 
-
 def get_trip_itinerary(db: Session, trip_id: int):
     """
-    שולף את כל הלו"ז של טיול ספציפי.
-    הקסם פה הוא ה-order_by: ה-SQL מסדר לנו את התוצאות כרונולוגית 
-    לפי תאריך ואז לפי שעת התחלה, ככה שה-Frontend מקבל את זה מוכן להצגה!
+    Retrieves the full itinerary for a specific trip.
+    We offload the chronological sorting (by date, then start time) directly to the DB 
+    using 'order_by', ensuring the Frontend receives presentation-ready data.
     """
     return db.query(models.TripItinerary).filter(
         models.TripItinerary.trip_id == trip_id
@@ -176,7 +171,7 @@ def get_trip_itinerary(db: Session, trip_id: int):
 
 def get_trip(db: Session, trip_id: int, user_id: int):
     """
-    שולף טיול ספציפי ומוודא שהוא אכן שייך למשתמש שביקש אותו
+    Fetches a specific trip while verifying user ownership to prevent IDOR vulnerabilities.
     """
     return db.query(models.Trip).filter(
         models.Trip.id == trip_id, 
@@ -184,18 +179,19 @@ def get_trip(db: Session, trip_id: int, user_id: int):
     ).first()
 
 def get_trip_total_cost(db: Session, trip_id: int):
-    # מבקש מהדאטה-בייס לסכום את עמודת המחיר של כל האטרקציות בטיול הזה
+    # Offloading the sum aggregation to PostgreSQL for better performance
     total = db.query(func.sum(models.TripItinerary.actual_price)).filter(
         models.TripItinerary.trip_id == trip_id
     ).scalar()
-    # אם הלוז ריק, הפונקציה תחזיר None, אז נוודא שמחזירים 0.0
-    if total is None :
+    
+    # Handle the edge case: scalar() returns None if the itinerary table is empty for this trip
+    if total is None:
         return 0.0
     return total
+
 def create_multi_city_trip(db: Session, city_ids: List[int], start_date, end_date, user_id: int):
-    
     new_trip = models.Trip(
-        city_id=city_ids[0], 
+        city_id=city_ids[0], # Using the primary city as the trip's main anchor
         start_date=start_date,
         end_date=end_date,
         user_id=user_id
@@ -205,16 +201,14 @@ def create_multi_city_trip(db: Session, city_ids: List[int], start_date, end_dat
     db.refresh(new_trip)
     return new_trip
 
-
 def get_attractions_for_cities(db: Session, city_ids: List[int]):
-    # אם הרשימה ריקה, נחזיר רשימה ריקה מיד בלי לפנות ל-DB
+    # Fast-fail: Return an empty list immediately to prevent an unnecessary DB query
     if not city_ids:
         return []
         
     return db.query(models.Attraction).filter(
         models.Attraction.city_id.in_(city_ids)
     ).all()
-
 
 def get_attractions_by_country(db: Session, country_id: int):
     return db.query(models.Attraction).join(models.City).filter(
@@ -224,35 +218,46 @@ def get_attractions_by_country(db: Session, country_id: int):
 def get_category_id_by_name(db: Session, category_name: str):
     if not category_name:
         return None
+        
     cat = db.query(models.AttractionCategory).filter(
-        models.AttractionCategory.name.ilike(category_name) # ilike עוזר למנוע בעיות של אותיות גדולות/קטנות
+        # Using 'ilike' for case-insensitive matching to avoid casing issues from user input
+        models.AttractionCategory.name.ilike(category_name) 
     ).first()
+    
     return cat.id if cat else None
 
 def get_user_recommendations(db: Session, user_id: int): 
     today = date.today()
+    
+    # Base query to aggregate and count occurrences of each category_id
     query = db.query(
         models.Attraction.category_id,
         func.count(models.Attraction.category_id).label("cat_count")
     )
+    
+    # Join itinerary and trip tables to filter down to the user's historical data
     query = query.join(
         models.TripItinerary, 
         models.Attraction.id == models.TripItinerary.attraction_id
     ).join(models.Trip)
 
+    # Restrict to the current user's past trips
     query = query.filter(models.Trip.user_id == user_id)
     query = query.filter(models.TripItinerary.visit_date < today)
 
+    # Execute and fetch the top visited category
     top_category = (
         query.group_by(models.Attraction.category_id)
         .order_by(func.count(models.Attraction.category_id).desc())
         .first()
     )
+    
     if top_category:
         return top_category.category_id
     return None
 
-def get_attraction_suggest (db:Session, user_id:int,top_catergory_id:int)  : 
+def get_attraction_suggest(db: Session, user_id: int, top_category_id: int): 
+    # Subquery: Fetch IDs of all attractions the user has historically visited
     visited_attraction_ids = (
         db.query(models.TripItinerary.attraction_id)
         .join(models.Trip)
@@ -260,19 +265,30 @@ def get_attraction_suggest (db:Session, user_id:int,top_catergory_id:int)  :
         .subquery() 
     )
 
-    new_places = db.query(models.Attraction).filter(models.Attraction.category_id == top_catergory_id).filter(models.Attraction.id. notin_(visited_attraction_ids)) .all()
+    # Fetch new attractions in the user's top category, explicitly excluding visited ones
+    new_places = db.query(models.Attraction).filter(
+        models.Attraction.category_id == top_category_id
+    ).filter(
+        models.Attraction.id.notin_(visited_attraction_ids)
+    ).all()
+    
     return new_places
 
 def get_city_by_id(db: Session, city_id: int):
-    """שולף עיר לפי ה-ID שלה"""
+    """ Fetches a single city record by its primary key. """
     return db.query(models.City).filter(models.City.id == city_id).first()
 
 def get_cached_attractions(db: Session, city_id: int, category_name: Optional[str] = None):
-    """בודק אם יש כבר אטרקציות שמורות במסד לעיר ולקטגוריה הזו"""
+    """ 
+    Checks the local database cache for attractions matching the given city 
+    and optional category, preventing redundant API calls. 
+    """
     query = db.query(models.Attraction).filter(models.Attraction.city_id == city_id)
     
-    # הוספנו בדיקה שהקטגוריה היא לא רק None, אלא גם לא מחרוזת ריקה או רווחים
+    # Strict validation: ensure category_name is valid (not None, empty, or whitespace-only)
     if category_name and category_name.strip() != "":
-        query = query.join(models.AttractionCategory).filter(models.AttractionCategory.name == category_name)
+        query = query.join(models.AttractionCategory).filter(
+            models.AttractionCategory.name == category_name
+        )
         
     return query.all()
