@@ -18,19 +18,20 @@ def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     
     # Pre-flight validation: Check for email collisions
     if crud.get_user_by_email(db, user_data.email):
-        raise HTTPException(status_code=409, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Email already registered")
     
     # Pre-flight validation: Check for username collisions
     if crud.get_user_by_username(db, user_data.username):
-        raise HTTPException(status_code=409, detail="Username already taken")
+        raise HTTPException(status_code=400, detail="Username already taken")
         
     # Validations passed: Proceed with persisting the new user record
     new_user = crud.create_user(db, user_data)
     
     return {"message": "User created successfully", "user_id": new_user.user_id}
 
+# response_model=schemas.UserLoginResponse
 
-@router.post("/login",response_model=schemas.UserLoginResponse)
+@router.post("/login")
 def login(user_data: schemas.UserLogin, db: Session = Depends(get_db)):
     """
     Authenticates user credentials against the database.
