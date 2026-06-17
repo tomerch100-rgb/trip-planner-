@@ -13,6 +13,18 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // טוקן פג תוקף - מוחקים מהזיכרון ומפנים להתחברות
+      localStorage.removeItem('token');
+      window.location.href = '/login'; 
+    }
+    return Promise.reject(error);
+  }
+);
+
 // קריאות גיאוגרפיה
 export const geographyAPI = {
   getCountries: () => API.get('/geography/countries'),
@@ -43,7 +55,7 @@ export const attractionsAPI = {
     API.get('/attractions/explore-live', { 
       params: { 
         city_id: cityId, 
-        category_name: categoryName 
+        categories: categoryName || null
       } 
     }),
 

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
-from backend.classes import schemas
-from backend.DB.db import get_db
-from backend.core.security import get_current_user_id
-import backend.classes.crud as crud
+from classes import schemas
+from DB.db import get_db
+from core.security import get_current_user_id
+import classes.crud as crud
 from typing import List
 
 router = APIRouter(tags=["Trips"])

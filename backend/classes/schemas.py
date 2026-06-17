@@ -69,11 +69,19 @@ class AttractionCreate(BaseModel):
     latitude: Optional[float] = Field(None, description="Geographic latitude coordinate")
     longitude: Optional[float] = Field(None, description="Geographic longitude coordinate")
 
-class AttractionResponse(AttractionCreate):
-    """Detailed response model for an Attraction, used by the attractions router."""
+class AttractionResponse(BaseModel):
     id: int
-    city_id: int | None = None
-    model_config = ConfigDict(from_attributes=True)
+    name: str
+    address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    rating: Optional[float] = None
+    
+    # 🟢 תוודא שהשורה הזו קיימת! אחרת React לא יקבל את הקטגוריה
+    category_id: Optional[int] = None 
+
+    class Config:
+        from_attributes = True
 
 
 # --- Trip Itinerary (Daily Schedule) Schemas ---

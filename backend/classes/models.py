@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Date, ForeignKey, Numeric, Time
+from sqlalchemy import Column, Integer, String, DateTime,Date, ForeignKey,Numeric,Time,ARRAY,Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from backend.DB.db import Base
@@ -39,17 +39,14 @@ class Attraction(Base):
     __tablename__ = "attractions"
     
     id = Column(Integer, primary_key=True, index=True)
-    category_id = Column(Integer, ForeignKey("attraction_categories.id"))
+    city_id = Column(Integer, ForeignKey("cities.id")) 
     name = Column(String(100), nullable=False)
-    address = Column(String(255), nullable=False)
-    default_price = Column(Numeric(10, 2), default=0.00)    
-    
-    # Using RESTRICT to prevent deleting a city if it still has linked attractions
-    city_id = Column(Integer, ForeignKey("cities.id", ondelete="RESTRICT"), nullable=False)
-    
-    # Precision 10, Scale 8 is the industry standard for high-accuracy GPS coordinates
-    latitude = Column(Numeric(10, 8), nullable=True)
-    longitude = Column(Numeric(11, 8), nullable=True)
+    address = Column(String(255))
+    latitude = Column(Float)
+    longitude = Column(Float)
+    category_id = Column(Integer, ForeignKey("attraction_categories.id"))
+    rating = Column(Float, default=0.0)
+    google_place_id = Column(String(255), nullable=True)
     
     city = relationship("City", back_populates="attractions")
 
