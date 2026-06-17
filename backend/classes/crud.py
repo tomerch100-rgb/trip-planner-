@@ -302,31 +302,11 @@ def get_cached_attractions(db: Session, city_id: int, category_name: Optional[st
         
     return query.all()
 
-def get_db_category_id_from_google_types(db: Session, google_types: List[str]):
-    """
-    """
-    mapping = {
-        "museum": "Museums",
-        "art_gallery": "Museums",
-        "park": "Parks",
-        "zoo": "Parks",
-        "restaurant": "Restaurants",
-        "cafe": "Restaurants",
-        "bakery": "Restaurants",
-        "night_club": "Nightlife",
-        "bar": "Nightlife",
-        "shopping_mall": "Shopping",
-        "clothing_store": "Shopping"
-    }
-
-    for g_type in google_types:
-        if g_type in mapping:
-            category_name = mapping[g_type]
-            return get_category_id_by_name(db, category_name)
-            
-    return None 
 def get_db_category_id_from_google_types(db: Session, google_types: list):
-  
+    """
+    Translates Google Places API type tags into our local database category IDs.
+    Normalizes the input to lowercase to prevent case-sensitivity mismatches.
+    """
     mapping = {
         "museum": "Museums and Culture",
         "art_gallery": "Museums and Culture",
@@ -349,38 +329,48 @@ def get_db_category_id_from_google_types(db: Session, google_types: list):
         "campground": "Sports and Extreme"
     }
 
+    # Iterate through the types provided by Google until we find a match in our system
     for g_type in google_types:
         if g_type.lower() in mapping:
             category_name = mapping[g_type.lower()]
             return get_category_id_by_name(db, category_name)
     
+    # Return None if Google's types are too obscure or don't match our specific app logic
     return None
 
+
 def save_google_results_to_db(db: Session, google_results: list, city_id: int):
+    """
+    Parses and persists raw Google Places results into the database.
+    Includes duplicate prevention, dynamic category mapping, and coordinate extraction.
+    """
+    print(f"DEBUG: Starting to process {len(google_results)} Google results for city_id: {city_id}")
     saved_attractions = [] 
     
     for place in google_results:
         name = place.get('name') or 'Unknown'
         
-        # 1. מניעת כפילויות
+        # 1. Deduplication Check: Prevent the same attraction from being saved twice in the same city
         existing = db.query(models.Attraction).filter_by(name=name, city_id=city_id).first()
         if existing:
             saved_attractions.append(existing)
             continue
         
-        # 2. חילוץ ה-types ומיפוי לקטגוריה
+        # 2. Extract types and map to a local Category ID
         google_types = place.get('categories', []) or place.get('types', [])
         cat_id = get_db_category_id_from_google_types(db, google_types)
         
-        # 🟢 רשת הביטחון: אם לא מצאנו התאמה, ניתן לו את קטגוריה 2 (טבע/אטרקציות) כברירת מחדל
+        # Safety Net: If no matching category is found, default to ID 2 (Nature/General Attractions)
+        # to ensure the recommendation engine has categorical data to work with.
         if cat_id is None:
             cat_id = 2
 
-        # 3. יצירת האובייקט (בלי rating ובלי google_place_id כדי שלא יקרוס!)
+        # 3. Object Instantiation: Intentionally excluding 'rating' and 'google_place_id' 
+        # as they are currently not defined in the SQLAlchemy Attraction model.
         new_attr = models.Attraction(
             name=name,
             city_id=city_id,
-            address=place.get('address') or place.get('formatted_address') or 'כתובת לא ידועה',
+            address=place.get('address') or place.get('formatted_address') or 'Unknown Address',
             latitude=place.get('latitude'),
             longitude=place.get('longitude'),
             category_id=cat_id
@@ -388,44 +378,8 @@ def save_google_results_to_db(db: Session, google_results: list, city_id: int):
         db.add(new_attr)
         saved_attractions.append(new_attr)
     
+    # Perform a single bulk commit at the end to optimize database transaction performance
     db.commit()
-    return saved_attractions
-
-def save_google_results_to_db(db: Session, google_results: list, city_id: int):
-    print(f"DEBUG: מתחיל לעבד {len(google_results)} תוצאות מגוגל עבור עיר {city_id}")
-    saved_attractions = [] 
+    print(f"DEBUG: Operation completed! Successfully saved {len(saved_attractions)} unique attractions.")
     
-    for place in google_results:
-        name = place.get('name') or 'Unknown'
-        
-        # 1. מניעת כפילויות
-        existing = db.query(models.Attraction).filter_by(name=name, city_id=city_id).first()
-        if existing:
-            saved_attractions.append(existing)
-            continue
-        
-        # 2. חילוץ ה-types ומיפוי לקטגוריה
-        google_types = place.get('categories', []) or place.get('types', [])
-        cat_id = get_db_category_id_from_google_types(db, google_types)
-        
-        # הגנה: אם המקום לא התאים לאף קטגוריה, נשייך אותו לקטגוריה 5 (Shopping/כללי) או נשאיר NULL
-        if cat_id is None:
-            # אם יש לך קטגוריית ברירת מחדל כללית, תוכל לשים את ה-ID שלה כאן (למשל: cat_id = 5)
-            pass
-
-        # 3. יצירת האובייקט עם הנתונים המלאים
-        new_attr = models.Attraction(
-            name=name,
-            city_id=city_id,
-            address=place.get('address') or place.get('formatted_address') or 'כתובת לא ידועה',
-            latitude=place.get('latitude'),
-            longitude=place.get('longitude'),
-            rating=place.get('rating', 0.0),
-            category_id=cat_id  # ה-ID המספרי התקין (1, 2, 3, 4 או 5)
-        )
-        db.add(new_attr)
-        saved_attractions.append(new_attr)
-    
-    db.commit()
-    print(f"DEBUG: סיימתי! שמרתי בהצלחה {len(saved_attractions)} אטרקציות.")
     return saved_attractions

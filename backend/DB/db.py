@@ -19,11 +19,11 @@ if not SQLALCHEMY_DATABASE_URL:
 # Initialize the Relational Database Management System (RDBMS) Engine
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args={"sslmode": "require"}, # זה חובה בגלל שאתה בענן (Neon)
+    connect_args={"sslmode": "require"}, 
     pool_size=10, 
     max_overflow=20,
-    pool_pre_ping=True,  # <--- הפתרון לשגיאת ה-SSL: מוודא שהחיבור חי לפני השאילתה
-    pool_recycle=300     # <--- מרענן את החיבורים כל 5 דקות כדי ש-Neon לא ינתק אותם
+    pool_pre_ping=True,  
+    pool_recycle=300    
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
