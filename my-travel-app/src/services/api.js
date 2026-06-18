@@ -17,7 +17,6 @@ API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // טוקן פג תוקף - מוחקים מהזיכרון ומפנים להתחברות
       localStorage.removeItem('token');
       window.location.href = '/login'; 
     }
@@ -68,8 +67,10 @@ export const attractionsAPI = {
 // ניהול טיולים
 export const tripsAPI = {
   getTrips: () => API.get('/trip'),
+  getSingleTrip: (tripId) => API.get(`/trip/${tripId}`),
+  getTripItinerary: (tripId) => API.get(`/itinerary/${tripId}`),
   createBulkItinerary: (itineraryData) => API.post('/itinerary/bulk', itineraryData),
-  planMultiCountryTrip: (tripData) => API.post('/trip/plan-multi-country', tripData),
+  planMultiCountryTrip: (tripData) => API.post('/trips/plan-multi-country', tripData),
 };
 
 export default API;

@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session,joinedload
 from sqlalchemy.sql import func
 import backend.classes.models as models
 import backend.classes.schemas as schemas
@@ -173,13 +173,14 @@ def get_trip_itinerary(db: Session, trip_id: int):
     We offload the chronological sorting (by date, then start time) directly to the DB 
     using 'order_by', ensuring the Frontend receives presentation-ready data.
     """
-    return db.query(models.TripItinerary).filter(
+    return db.query(models.TripItinerary).options(
+        joinedload(models.TripItinerary.attraction)
+    ).filter(
         models.TripItinerary.trip_id == trip_id
     ).order_by(
         models.TripItinerary.visit_date, 
         models.TripItinerary.start_time
     ).all()
-
 def get_trip(db: Session, trip_id: int, user_id: int):
     """
     Fetches a specific trip while verifying user ownership to prevent IDOR vulnerabilities.

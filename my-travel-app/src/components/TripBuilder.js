@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import MapView from './MapView';
+// 🌟 מייבאים את ה-API כדי שנוכל לשמור באמת בדאטהבייס
+import { tripsAPI } from '../services/api';
 
-const TripBuilder = ({ savedAttractions = [], destinationName }) => {
+const TripBuilder = ({ savedAttractions = [], destinationName, onTripComplete }) => {
   const [tripDetails, setTripDetails] = useState(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -53,18 +55,50 @@ const TripBuilder = ({ savedAttractions = [], destinationName }) => {
     setItinerary(updated);
   };
 
-  // שמירת הטיול ושליחה (כרגע הדפסה ל-Console)
-  const handleSaveItinerary = () => {
-    const finalData = {
-      destination: tripDetails.destination,
-      start_date: tripDetails.startDate,
-      end_date: tripDetails.endDate,
-      total_days: tripDetails.daysCount,
-      itinerary: itinerary
-    };
-    console.log("כל הדאטה שמוכן לשליחה ל-Backend:", finalData);
-    alert(`הטיול ל-${tripDetails.destination} נשמר בהצלחה! תאריכים: ${tripDetails.startDate} עד ${tripDetails.endDate}`);
+  // 🌟 תיקון: הפכנו את הפונקציה ל-async ומבצעים שמירה אמיתית מול ה-FastAPI
+ const handleSaveItinerary = async () => {
+    try {
+      const tripData = {
+        city_ids: [1], 
+        start_date: tripDetails.startDate,
+        end_date: tripDetails.endDate
+      };
+
+      // 1. יצירת הטיול בבסיס הנתונים
+      const tripResponse = await tripsAPI.planMultiCountryTrip(tripData);
+      const newTripId = tripResponse.data.id; 
+
+      // 2. שמירת האטרקציות לתוך הלו"ז של הטיול שנוצר
+      if (itinerary.length > 0) {
+        const bulkData = {
+          items: itinerary.map(item => ({
+            trip_id: newTripId,
+            attraction_id: item.id,
+            visit_date: tripDetails.startDate, 
+            start_time: item.start_time || '10:00',
+            end_time: '12:00'
+          }))
+        };
+        // קריאה לפונקציה שקיימת אצלך ב-api.js
+        await tripsAPI.createBulkItinerary(bulkData);
+      }
+
+      console.log("DEBUG: Trip and Itinerary saved successfully with ID:", newTripId);
+      alert(`הטיול ל-${tripDetails.destination} נשמר בהצלחה!`);
+
+      // 3. מעבר אוטומטי למסך הסיכום והמפה של האבא
+      if (onTripComplete) {
+          onTripComplete(newTripId); 
+      }
+
+    } catch (error) {
+      console.error("DEBUG: Failed to save itinerary to DB:", error);
+      alert("שגיאה בשמירת המסלול בשרת. ודא שה-Backend רץ.");
+    }
   };
+
+  // הערה: כאן למטה אמור להמשיך ה-return של ה-JSX שלך שמציג את הטופס והכרטיסיות.
+  // אל תיגע ב-return, תשאיר אותו כמו שהוא היה אצלך בקובץ במקור!
 
   // --- שלב א': טופס בחירת תאריכים ---
   if (!tripDetails) {

@@ -4,7 +4,9 @@ import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import SearchBar from './components/SearchBar';
 import AttractionsList from './components/AttractionsList';
-import TripBuilder from './components/TripBuilder';
+// ייבאנו את הרכיב החדש במקום TripBuilder
+import ItineraryPlanner from './components/ItineraryPlanner';
+import TripSummary from './components/TripSummary';
 import 'leaflet/dist/leaflet.css'; 
 
 function App() {
@@ -14,17 +16,16 @@ function App() {
   const [liveAttractions, setLiveAttractions] = useState([]);
   const [selectedCityName, setSelectedCityName] = useState('');
   const [myTripAttractions, setMyTripAttractions] = useState([]); 
+  const [createdTripId, setCreatedTripId] = useState(null); 
 
-const handleSearchResults = (attractionsData, cityName) => {
-    // כאן האבא מקבל את המערך של 20 האטרקציות ומעדכן את הסטייט שלו!
+  const handleSearchResults = (attractionsData, cityName) => {
     setLiveAttractions(attractionsData || []);
     setSelectedCityName(cityName);
-    setCurrentStep('attractions'); // מעביר את המסך לכרטיסיות
+    setCurrentStep('attractions'); 
   };
 
-  // תיקון הבעיה: הוספתי את ה-attraction כפרמטר לפונקציה
   const handleAddToTrip = (attraction) => {
-    if (!attraction || !attraction.name) return; // הגנה
+    if (!attraction || !attraction.name) return; 
     
     if (!myTripAttractions.find(a => a.id === attraction.id)) {
       setMyTripAttractions([...myTripAttractions, attraction]);
@@ -59,13 +60,11 @@ const handleSearchResults = (attractionsData, cityName) => {
         </div>
       </header>
 
-     <main className="p-8 max-w-6xl mx-auto">
-        {/* שלב 1: הצגת רכיב החיפוש */}
+      <main className="p-8 max-w-6xl mx-auto">
         {currentStep === 'destination' && (
           <SearchBar onSearchResults={handleSearchResults} />
         )}
 
-        {/* שלב 2: תצוגת הכרטיסיות */}
         {currentStep === 'attractions' && (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Attractions in {selectedCityName}</h2>
@@ -84,12 +83,20 @@ const handleSearchResults = (attractionsData, cityName) => {
           </div>
         )}
 
-        {/* שלב 3: תכנון הלו"ז והמסלול */}
+        {/* שלב 3: הפעלת רכיב מערכת השעות המתוחכם במקום הישן */}
         {currentStep === 'planning' && (
-          <TripBuilder 
+          <ItineraryPlanner 
             savedAttractions={myTripAttractions} 
             destinationName={selectedCityName} 
+            onTripComplete={(tripId) => {
+              setCreatedTripId(tripId);
+              setCurrentStep('summary');
+            }}
           />
+        )}
+
+        {currentStep === 'summary' && (
+          <TripSummary tripId={createdTripId} />
         )}
       </main>
     </div>
