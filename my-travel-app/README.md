@@ -1,70 +1,74 @@
-# Getting Started with Create React App
+# Triper 🌍
+**Personalized Trip Planner & Dynamic Itinerary Builder**
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Triper is a smart, full-stack web application designed to simplify and elevate the travel planning experience. It allows users to explore worldwide destinations, receive personalized attraction recommendations based on their travel history, and build detailed, conflict-free daily itineraries effortlessly.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 🛠 Tech Stack
 
-### `npm start`
+<p align="left">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB">
+  <img src="https://img.shields.io/badge/FastAPI-05998B?style=for-the-badge&logo=fastapi&logoColor=white">
+  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white">
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white">
+</p>
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🚀 Key Features
 
-### `npm test`
+* 🌍 **Global Exploration:** Search for attractions, landmarks, and points of interest in any city or country worldwide.
+* ✨ **Smart Recommendations Engine:** Provides highly personalized "Just For You" attraction suggestions by analyzing the user's past trips and category preferences.
+* 🔍 **Advanced Filtering:** Streamline search results based on specific budgets and categories.
+* 📅 **Dynamic Itinerary Builder:** An interactive, visual weekly planner that allows users to schedule attractions with a built-in real-time overlap prevention system.
+* 👤 **Personal Dashboard:** A dedicated space to manage upcoming itineraries and track travel history.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## 📸 Preview
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+> **Note to self:** > [Insert a GIF or a high-quality screenshot here showcasing the Side-by-Side view of the Recommendations Gold Panel and the Attractions List, or the Weekly Planner grid.]
+> `![Triper Planner Preview](./images/preview.png)`
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## ⚙️ Getting Started
 
-### `npm run eject`
+### Prerequisites
+* Python 3.9+
+* Node.js (v16+)
+* PostgreSQL
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Local Installation
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/tomer chaimi/trip-planner.git](https://github.com/your-username/trip-planner.git)
+   cd trip-planner
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+   cd backend
+# Create a virtual environment (optional but recommended)
+python -m venv venv
+source venv/bin/activate # On Windows use `venv\Scripts\activate`
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+# Install dependencies
+pip install -r requirements.txt
 
-## Learn More
+# Run the server
+uvicorn main:app --reload
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+cd ../frontend
+# Install dependencies
+npm install
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+# Start the development server
+npm start
 
-### Code Splitting
+💡 Lessons Learned
+The most significant technical challenge in this project was developing a seamless, collision-free scheduling mechanism for the Itinerary Builder. I engineered a robust logic that validates time slots in real-time, preventing overlapping attractions. This required optimizing React's state management to keep the UI perfectly synchronized with the underlying database, ensuring a flawless and intuitive user experience.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+👨‍💻 About The Project
+This project was built to solve a real-world problem while showcasing modern Full-Stack development practices, focusing heavily on clean architecture, responsive UX/UI, and efficient data handling between a React client and a Python backend.
 
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Built with ❤️ by Tomer Chaimi and Tomer shorani

@@ -20,7 +20,7 @@ function App() {
   const [myTripAttractions, setMyTripAttractions] = useState([]); 
   const [createdTripId, setCreatedTripId] = useState(null); 
 
-  // ה-useEffect המעודכן שחותך רק 3 המלצות
+ 
   useEffect(() => {
     if (currentStep === 'attractions' && user) {
       console.log("DEBUG: מפעיל משיכת המלצות מהשרת...");
@@ -70,7 +70,7 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white p-4 shadow flex justify-between items-center">
-        <h1 className="text-xl font-bold text-blue-600">RoamWise</h1>
+        <h1 className="text-xl font-bold text-blue-600">Triper</h1>
         <div className="flex gap-4">
           <button onClick={() => setCurrentStep('destination')} className="text-sm font-bold text-slate-600 hover:text-blue-600">
             New Search

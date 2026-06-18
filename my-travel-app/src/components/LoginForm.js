@@ -35,7 +35,7 @@ export default function LoginForm({ onSwitchToRegister }) {
           <div className="mx-auto w-12 h-12 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-md shadow-cyan-100">
             <Compass className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900">Welcome to RoamWise</h1>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900">Welcome to Triper</h1>
           <p className="text-sm text-slate-400 font-medium">Log in to start planning your luxury custom escape</p>
         </div>
 
