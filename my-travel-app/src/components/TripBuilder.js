@@ -143,53 +143,61 @@ const TripBuilder = ({ savedAttractions = [], destinationName, onTripComplete })
     );
   }
 
-  // --- שלב ב': מסך בניית הלו"ז המלא והמפה ---
-  return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-right" dir="rtl">
-      <div className="flex justify-between items-center mb-6 border-b pb-4 border-gray-100">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">
-            הלו"ז שלי ל{tripDetails.destination}
-          </h2>
-          <p className="text-xs text-gray-500 mt-0.5">
-            תאריכים: {tripDetails.startDate} עד {tripDetails.endDate} ({tripDetails.daysCount} ימים)
-          </p>
-        </div>
-        <button 
-          onClick={() => { setTripDetails(null); setItinerary([]); }}
-          className="text-xs font-bold text-blue-600 hover:underline"
-        >
-          שנה תאריכים (מנקה את הלו"ז)
-        </button>
-      </div>
+  {/* שלב 2: תצוגת הכרטיסיות והמלצות העבר האישיות */}
+        {currentStep === 'attractions' && (
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', width: '100%', alignItems: 'flex-start', position: 'relative' }} dir="rtl">
+            
+            {/* עמודה ימנית (ראשית) - אטרקציות רגילות - תופסת 70% מהרוחב */}
+            <div style={{ flex: '0 0 70%', minWidth: '0' }} className="space-y-6">
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <h2 className="text-2xl font-black text-gray-800">
+                  Attractions in {selectedCityName}
+                </h2>
+              </div>
+              
+              <AttractionsList 
+                attractions={liveAttractions} 
+                onAddToTrip={handleAddToTrip} 
+              />
+            </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        
-        {/* צד ימין: סל האטרקציות שבחרת מהחיפוש */}
-        <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 max-h-[500px] overflow-y-auto">
-          <h3 className="font-bold text-blue-900 mb-4 text-base">סל האטרקציות שלי ({savedAttractions.length})</h3>
-          
-          {savedAttractions.length === 0 ? (
-            <p className="text-xs text-gray-500">
-              עדיין לא הוספת אטרקציות. חזור לשלב החיפוש ולחץ על "+ הוסף לטיול".
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {savedAttractions.map((attr, index) => (
-                <li key={attr.id || index} className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex justify-between items-center text-sm">
-                  <span className="font-medium text-gray-800 truncate pl-2" title={attr.name}>{attr.name}</span>
-                  <button 
-                    onClick={() => handleSchedule(attr)}
-                    className="bg-green-600 hover:bg-green-700 text-white font-bold text-xs px-3 py-1.5 rounded-md transition shrink-0"
-                  >
-                    שבץ בלו"ז ➔
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+            {/* עמודה שמאלית (צדדית) - ריבוע הזהב - תופסת 30% מהרוחב */}
+            <div style={{ flex: '0 0 30%', position: 'sticky', top: '24px' }}>
+              <RecommendationsPanel 
+                recommendations={recommendations} 
+                onAddToTrip={handleAddToTrip} 
+              />
+            </div>
 
+            {/* כפתור בניית מסלול מרחף ויציב בפינה התחתונה */}
+            {myTripAttractions.length > 0 && (
+              <button 
+                onClick={() => setCurrentStep('planning')}
+                style={{
+                  position: 'fixed',
+                  bottom: '32px',
+                  right: '32px',
+                  backgroundColor: '#16a34a', // צבע ירוק
+                  color: '#fff',
+                  padding: '16px 32px',
+                  borderRadius: '9999px',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                  border: '4px solid #fff',
+                  cursor: 'pointer',
+                  fontWeight: '900',
+                  fontSize: '18px',
+                  zIndex: 9999, // מוודא שהוא תמיד מעל האטרקציות והמפה
+                  transition: 'transform 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                בנה לו"ז טיול ({myTripAttractions.length}) ➔
+              </button>
+            )}
+            
+          </div>
+        )}
         {/* צד שמאל: ציר הזמן והלו"ז המשובץ */}
         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 max-h-[500px] overflow-y-auto">
           <h3 className="font-bold text-gray-800 mb-4 text-base">המסלול היומי שלי ({itinerary.length})</h3>
