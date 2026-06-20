@@ -3,7 +3,15 @@ from typing import List, Optional
 from datetime import date, time
 
 # --- User Schemas ---
+class CountryLightResponse(BaseModel):
+    name: str
+    model_config = ConfigDict(from_attributes=True)
 
+class CityLightResponse(BaseModel):
+    name: str
+    country: Optional[CountryLightResponse] = None
+    model_config = ConfigDict(from_attributes=True)
+    
 class UserCreate(BaseModel):
     """Payload for registering a new user."""
     email: EmailStr
