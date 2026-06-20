@@ -22,7 +22,7 @@ class Trip(Base):
     start_date = Column(Date)
     end_date = Column(Date)
     user_id = Column(Integer, ForeignKey("users.user_id"))
-    
+    city = relationship("City")
     # One-to-many relationship: Deleting a trip automatically cascades 
     # to delete its entire scheduled itinerary from the database.
     itinerary = relationship("TripItinerary", back_populates="trip", cascade="all, delete-orphan")

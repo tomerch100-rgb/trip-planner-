@@ -66,11 +66,14 @@ export const attractionsAPI = {
 
 // ניהול טיולים
 export const tripsAPI = {
-  getTrips: () => API.get('/trip'),
-  getSingleTrip: (tripId) => API.get(`/trip/${tripId}`),
+  getTrips: () => API.get('/trips'),
+  getSingleTrip: (tripId) => API.get(`/trips/${tripId}`),
   getTripItinerary: (tripId) => API.get(`/itinerary/${tripId}`),
   createBulkItinerary: (itineraryData) => API.post('/itinerary/bulk', itineraryData),
   planMultiCountryTrip: (tripData) => API.post('/trips/plan-multi-country', tripData),
+  deleteTrip: (tripId) => API.delete(`/trips/${tripId}`), // ודא שאכן הנתיב ב-main.py שלך הוא תחת הקידומת /trips
+  deleteItineraryItem: (itemId) => API.delete(`/itinerary/item/${itemId}`),
+  updateItineraryItem: (itemId, itemData) => API.put(`/itinerary/item/${itemId}`, itemData),
 };
 
 export default API;

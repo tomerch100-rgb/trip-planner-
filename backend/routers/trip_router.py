@@ -77,3 +77,10 @@ async def plan_trip(
         end_date=new_trip.end_date,
         attractions=attractions
     )
+@router.delete("/{trip_id}")
+def remove_trip(trip_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    # שים לב ששינינו ל-user_id והעברנו אותו ישירות לפונקציה
+    success = crud.delete_trip(db=db, trip_id=trip_id, user_id=user_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Trip not found or unauthorized")
+    return {"message": "הטיול נמחק בהצלחה"}

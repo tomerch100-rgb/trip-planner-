@@ -131,7 +131,9 @@ def save_google_results_to_db(db: Session, google_results: list, city_id: int):
             address=place.get('formatted_address') or 'כתובת לא ידועה',
             latitude=place.get('latitude'),
             longitude=place.get('longitude'),
-            category_id=cat_id  # שמירת ה-ID שנמצא!
+            category_id=cat_id,
+            default_price=place.get('default_price', 0.0)
+
         )
         db.add(new_attr)
         saved_attractions.append(new_attr)
@@ -189,6 +191,37 @@ def get_trip(db: Session, trip_id: int, user_id: int):
         models.Trip.id == trip_id, 
         models.Trip.user_id == user_id
     ).first()
+
+def delete_trip(db: Session, trip_id: int, user_id: int):
+    db_trip = db.query(models.Trip).filter(models.Trip.id == trip_id, models.Trip.user_id == user_id).first()
+    if db_trip:
+        db.delete(db_trip)
+        db.commit()
+        return True
+    return False
+
+# Deleting a specific item from the trip itinerary
+def delete_itinerary_item(db: Session, itinerary_id: int):
+    db_item = db.query(models.Itinerary).filter(models.Itinerary.id == itinerary_id).first()
+    if db_item:
+        db.delete(db_item)
+        db.commit()
+        return True
+    return False
+
+#Update a specific item in the schedule (day or time)
+def update_itinerary_item(db: Session, itinerary_id: int, item_data: schemas.ItineraryUpdate):
+    db_item = db.query(models.Itinerary).filter(models.Itinerary.id == itinerary_id).first()
+    if db_item:
+        # Updates only the fields submitted in the request
+        update_data = item_data.dict(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(db_item, key, value)
+        
+        db.commit()
+        db.refresh(db_item)
+        return db_item
+    return None
 
 def get_trip_total_cost(db: Session, trip_id: int):
     # Offloading the sum aggregation to PostgreSQL for better performance

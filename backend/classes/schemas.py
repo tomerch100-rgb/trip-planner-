@@ -37,6 +37,7 @@ class TripResponse(TripCreate):
     """Standard response model for a Trip, including DB-generated IDs."""
     id: int
     user_id: int
+    city: Optional[CityLightResponse] = None
     model_config = ConfigDict(from_attributes=True)
 
 class MultiCityTripRequest(BaseModel):
@@ -76,8 +77,6 @@ class AttractionResponse(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     rating: Optional[float] = None
-    
-    # 🟢 תוודא שהשורה הזו קיימת! אחרת React לא יקבל את הקטגוריה
     category_id: Optional[int] = None 
 
     class Config:
@@ -99,12 +98,19 @@ class ItineraryResponse(ItineraryCreate):
     """Response model representing a confirmed scheduled event."""
     id: int
     next_recommended_attraction_id: Optional[int] = None
+    attraction: Optional[AttractionResponse] = None
     model_config = ConfigDict(from_attributes=True)
 
 class BulkItineraryCreate(BaseModel):
     """Payload for batch-inserting multiple itinerary events at once."""
     items: List[ItineraryCreate]
 
+class ItineraryUpdate(BaseModel):
+    day_number: Optional[int] = None
+    time_slot: Optional[str] = None  # למשל: "10:00", "14:30"
+
+    class Config:
+        from_attributes = True
 
 # --- Geography & Category Responses ---
 
@@ -143,4 +149,13 @@ class ExploreLiveResponse(BaseModel):
     total_results: int
     attractions: List[AttractionResponse] = []
 
+    model_config = ConfigDict(from_attributes=True)
+
+class CountryLightResponse(BaseModel):
+    name: str
+    model_config = ConfigDict(from_attributes=True)
+
+class CityLightResponse(BaseModel):
+    name: str
+    country: Optional[CountryLightResponse] = None
     model_config = ConfigDict(from_attributes=True)
