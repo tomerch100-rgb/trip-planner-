@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TRAVEL_CATEGORIES } from '../constants/categories';
 import './CategorySelector.css'
@@ -6,7 +5,7 @@ import './CategorySelector.css'
 function CategorySelector({ selectedCategories, setSelectedCategories }) {
     
     const handleCategoryClick = (categoryId) => {
-        // אם הקטגוריה כבר נבחרה - נסיר אותה מהרשימה, אם לא - נוסיף אותה
+        // If the category is already selected - remove it from the list, otherwise - add it
         if (selectedCategories.includes(categoryId)) {
             setSelectedCategories(selectedCategories.filter(id => id !== categoryId));
         } else {

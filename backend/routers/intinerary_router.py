@@ -7,7 +7,7 @@ from backend.DB.db import get_db
 from typing import List
 router = APIRouter( tags=["itinerary"])
 
-# 1. הוספת הלו"ז (Bulk)
+# 1. Add itinerary (Bulk)
 @router.post("/bulk", status_code=status.HTTP_201_CREATED)
 def add_bulk_itinerary(
     request: schemas.BulkItineraryCreate,
@@ -23,11 +23,11 @@ def get_trip_itinerary(
     db: Session = Depends(get_db),
     user_id: int = Depends(security.get_current_user_id)
 ):
-    # קוראים לפונקציה שכבר כתבנו ב-CRUD
+    # Calling the function already written in CRUD
     itinerary = crud.get_trip_itinerary(db=db, trip_id=trip_id)
     
     if not itinerary:
-        return [] # מחזירים רשימה ריקה אם אין עדיין לו"ז
+        return [] # Returning an empty list if there is no itinerary yet
         
     return itinerary
 
@@ -44,7 +44,7 @@ def remove_itinerary_item(itinerary_id: int, db: Session = Depends(get_db), user
     success = crud.delete_itinerary_item(db=db, itinerary_id=itinerary_id)
     if not success:
         raise HTTPException(status_code=404, detail="Itinerary item not found")
-    return {"message": "האטרקציה הוסרה מהלו''ז בהצלחה"}
+    return {"message": "The attraction was successfully removed from the itinerary"}
 
 @router.put("/item/{itinerary_id}", response_model=schemas.ItineraryResponse) 
 def modify_itinerary_item(itinerary_id: int, item_data: schemas.ItineraryUpdate, db: Session = Depends(get_db), user_id: int = Depends(security.get_current_user_id)):

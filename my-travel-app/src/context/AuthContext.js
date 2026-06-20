@@ -7,7 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // בדיקה אוטומטית בעת טעינת האתר אם המשתמש כבר מחובר (יש טוקן בזיכרון)
+  // Automatic check upon loading the site to see if the user is already logged in (token exists in memory)
   useEffect(() => {
     const verifyToken = async () => {
       const token = localStorage.getItem('token');
@@ -17,17 +17,17 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        // שולחים את הטוקן לשרת לבדיקה
-        // אנחנו צריכים נתיב כזה ב-Backend, או להשתמש בנתיב קיים שדורש זיהוי
+        // Send the token to the server for verification
+        // We need an endpoint like this in the Backend, or use an existing endpoint that requires authentication
         const response = await axios.get('http://localhost:8000/trips/', {
           headers: { Authorization: `Bearer ${token}` }
         });
         
-        // אם הצלחנו לקבל רשימת טיולים, סימן שהטוקן תקין!
-        // נעדכן את ה-user ב-Context
+        // If we successfully received the trips list, it means the token is valid!
+        // We update the user state in the Context
         setUser({ authenticated: true }); 
       } catch (e) {
-        // אם השרת החזיר 401, סימן שהטוקן לא תקין
+        // If the server returned 401, it means the token is invalid
         localStorage.removeItem('token');
         setUser(null);
       } finally {
@@ -36,7 +36,8 @@ export const AuthProvider = ({ children }) => {
     };
     verifyToken();
   }, []);
-  // פונקציית התחברות - שולחת את ה-UserLogin Pydantic Model שלך כ-JSON
+
+  // Login function - sends your UserLogin Pydantic Model as JSON
   const login = async (username, password) => {
     const response = await axios.post('http://localhost:8000/auth/login', {
       username,
@@ -46,7 +47,7 @@ export const AuthProvider = ({ children }) => {
     const { access_token } = response.data;
     localStorage.setItem('token', access_token);
     
-    // פיענוח ה-user_id מתוך הטוקן החדש שנוצר
+    // Decoding the user_id from inside the newly created token
     const base64Url = access_token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const payload = JSON.parse(window.atob(base64));
@@ -55,7 +56,7 @@ export const AuthProvider = ({ children }) => {
     return response.data;
   };
 
-  // פונקציית הרשמה - שולחת את ה-UserCreate Pydantic Model שלך
+  // Registration function - sends your UserCreate Pydantic Model
   const register = async (email, username, password) => {
     const response = await axios.post('http://localhost:8000/auth/register', {
       email,

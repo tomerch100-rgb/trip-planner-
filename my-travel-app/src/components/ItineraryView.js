@@ -4,7 +4,7 @@ import { Calendar, Clock, MapPin } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// תיקון לאייקונים של המפה שמגיעים כברירת מחדל ב-Leaflet
+// Fix for default Leaflet marker icons configuration issues
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.71.1/images/marker-icon-2x.png',
@@ -14,21 +14,21 @@ L.Icon.Default.mergeOptions({
 
 export default function ItineraryView({ plannedLegs = [] }) {
   
-  // חילוץ כל האטרקציות מכל המקטעים (המדינות) לרשימה אחת ארוכה עבור המפה
+  // Flatten all attractions from all legs (cities/countries) into a single array for map mapping
   const allItineraryItems = plannedLegs.flatMap(leg => leg.items || []);
 
-  // סינון אטרקציות שיש להן קואורדינטות תקינות בלבד והכנת מערך ציור המסלול
+  // Filter attractions with valid coordinates and prepare polyline path mapping arrays
   const validPositions = allItineraryItems
     .filter(attr => attr.latitude && attr.longitude)
     .map(attr => [attr.latitude, attr.longitude]);
 
-  // נקודת העיגון של המפה (אם יש נתונים נלך אליהם, אחרת מרכז רומא)
+  // Set default map fallback anchor positioning to central Rome if coordinates list is empty
   const mapCenter = validPositions.length > 0 ? validPositions[0] : [41.8902, 12.4922];
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row min-h-0 w-full">
       
-      {/* צד שמאל: הלו"ז המאוחד מכל היעדים */}
+      {/* Left Column Layout: Unified Itinerary Timelines Across Targets */}
       <div className="w-full lg:w-1/2 p-6 overflow-y-auto max-h-[calc(100vh-8.5rem)]">
         <div className="mb-6">
           <span className="text-xs font-bold uppercase tracking-wider text-cyan-600 bg-cyan-50 px-2.5 py-1 rounded-full">
@@ -42,11 +42,11 @@ export default function ItineraryView({ plannedLegs = [] }) {
           </p>
         </div>
 
-        {/* ציר הזמן - מבוסס על המקטעים */}
+        {/* Timelines Tracking Architecture - Based on provided planned segments */}
         <div className="space-y-10 relative before:absolute before:inset-0 before:left-4 before:border-l-2 before:border-dashed before:border-slate-200">
           {plannedLegs.map((leg, legIdx) => (
             <div key={legIdx} className="relative pl-10 group">
-              {/* נקודת העוגן של ציר הזמן למדינה */}
+              {/* Timeline country node marker anchor */}
               <div className="absolute left-2 top-1.5 w-4 h-4 rounded-full border-4 border-white bg-cyan-500 shadow-sm shadow-cyan-200"></div>
               
               <div className="mb-4">
@@ -56,7 +56,7 @@ export default function ItineraryView({ plannedLegs = [] }) {
                 </p>
               </div>
 
-              {/* רשימת האטרקציות בתוך המדינה הספציפית הזו */}
+              {/* Nested attractions loop inside this specific location segment */}
               <div className="space-y-4">
                 {leg.items.map((item, itemIdx) => (
                   <div key={itemIdx} className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm hover:border-cyan-100 transition-all flex justify-between items-center">
@@ -88,11 +88,11 @@ export default function ItineraryView({ plannedLegs = [] }) {
         </div>
       </div>
 
-      {/* צד ימין: המפה האינטראקטיבית */}
+      {/* Right Column Layout: Interactive Path Mapping View */}
       <div className="w-full lg:w-1/2 h-[45vh] lg:h-[calc(100vh-8.5rem)] sticky bottom-0 lg:top-0">
         <MapContainer 
           center={mapCenter} 
-          zoom={validPositions.length > 1 ? 5 : 12} // זום רחב יותר אם יש מעבר בין מדינות
+          zoom={validPositions.length > 1 ? 5 : 12} // Uses a wider zoom if multiple destination legs exist
           className="w-full h-full border-l border-slate-100 shadow-inner"
         >
           <TileLayer
@@ -100,7 +100,7 @@ export default function ItineraryView({ plannedLegs = [] }) {
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           />
           
-          {/* ציור קו המסלול */}
+          {/* Renders the sequential routing connector path line */}
           {validPositions.length > 1 && (
             <Polyline 
               positions={validPositions} 
@@ -108,7 +108,7 @@ export default function ItineraryView({ plannedLegs = [] }) {
             />
           )}
 
-          {/* ציור הסיכות של האטרקציות */}
+          {/* Renders interactive target pinpoint map markers */}
           {allItineraryItems
             .filter(attr => attr.latitude && attr.longitude)
             .map((attr, idx) => (

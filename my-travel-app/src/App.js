@@ -16,7 +16,7 @@ import { Home } from 'lucide-react';
 function App() {
   const { user, logout } = useContext(AuthContext); 
   const [authMode, setAuthMode] = useState('login');
-  const [currentStep, setCurrentStep] = useState('home'); // מתחילים בדף הבית
+  const [currentStep, setCurrentStep] = useState('home'); // Starting at home step layout
   const [liveAttractions, setLiveAttractions] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [selectedCityName, setSelectedCityName] = useState('');
@@ -25,16 +25,16 @@ function App() {
 
   useEffect(() => {
     if (currentStep === 'attractions' && user) {
-      console.log("DEBUG: מפעיל משיכת המלצות מהשרת...");
+      console.log("DEBUG: Triggering recommendations fetch from server...");
       attractionsAPI.getRecommendations()
         .then(res => {
-          console.log("DEBUG: המלצות שהתקבלו מהשרת:", res.data);
-          // לוקחים רק את 3 ההמלצות הראשונות
+          console.log("DEBUG: Recommendations received from server:", res.data);
+          // Take only the top 3 items
           const topThreeRecommendations = (res.data || []).slice(0, 3);
           setRecommendations(topThreeRecommendations);
         })
         .catch(err => {
-          console.error("DEBUG: שגיאה בקבלת המלצות מהשרת:", err);
+          console.error("DEBUG: Error fetching recommendations from server:", err);
         });
     }
   }, [currentStep, user]);
@@ -50,9 +50,9 @@ function App() {
     
     if (!myTripAttractions.find(a => a.id === attraction.id)) {
       setMyTripAttractions([...myTripAttractions, attraction]);
-      alert(`${attraction.name} הוספה לטיול!`);
+      alert(`${attraction.name} added to your trip!`);
     } else {
-      alert('אטרקציה זו כבר קיימת במסלול.');
+      alert('This attraction is already added to your itinerary.');
     }
   };
 
@@ -72,7 +72,7 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50">
       
-      {/* תפריט ניווט עליון (Header) */}
+      {/* Top Header Navigation Panel */}
       <header className="bg-white p-4 shadow flex justify-between items-center px-8">
         <h1 
           className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 cursor-pointer"
@@ -86,18 +86,18 @@ function App() {
               onClick={() => setCurrentStep('home')} 
               className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-600 transition"
             >
-              <Home size={18} /> דף הבית
+              <Home size={18} /> Home
             </button>
           )}
           <button onClick={handleLogout} className="text-sm font-bold text-red-500 hover:text-red-700 transition">
-            התנתק
+            Logout
           </button>
         </div>
       </header>
 
       <main className="p-8 max-w-full mx-auto" style={{ position: 'relative' }}>
         
-        {/* שלב 0: דף הבית */}
+        {/* Step 0: Dashboard Home Layout */}
         {currentStep === 'home' && (
           <Dashboard 
             onNewTrip={() => setCurrentStep('destination')} 
@@ -105,29 +105,29 @@ function App() {
           />
         )}
 
-        {/* שלב 0.5: האזור האישי החדש שלנו */}
+        {/* Step 0.5: Personal Dashboard Area */}
         {currentStep === 'personal_area' && (
           <PersonalArea 
             onViewTripSummary={(tripId) => {
               setCreatedTripId(tripId);
-              setCurrentStep('summary'); // מפנה ישר לצפייה בלו"ז הטיול
+              setCurrentStep('summary'); // Redirects directly to viewing the trip schedule timeline
             }}
           />
         )}
 
-        {/* שלב 1: חיפוש יעד (SearchBar) */}
+        {/* Step 1: Destination Search Panel View (SearchBar) */}
         {currentStep === 'destination' && (
           <SearchBar onSearchResults={handleSearchResults} />
         )}
 
-        {/* שלב 2: תצוגת הכרטיסיות (האטרקציות) */}
+        {/* Step 2: Grid Attractions Cards Panel and Explorer Views */}
         {currentStep === 'attractions' && (
           <>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', width: '100%', alignItems: 'flex-start' }} dir="rtl">
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', width: '100%', alignItems: 'flex-start' }} dir="ltr">
               
-              {/* עמודה ימנית (ראשית) - אטרקציות רגילות */}
+              {/* Main Left Content Block - Regular Attractions Grid List */}
               <div style={{ flex: '0 0 70%', minWidth: '0' }} className="space-y-6">
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-left">
                   <h2 className="text-2xl font-black text-gray-800">
                     Attractions in {selectedCityName}
                   </h2>
@@ -139,7 +139,7 @@ function App() {
                 />
               </div>
 
-              {/* עמודה שמאלית (צדדית) - המלצות */}
+              {/* Sidebar Right Column Block - Personalized Context Recommendations Panel */}
               <div style={{ flex: '0 0 30%', position: 'sticky', top: '24px' }}>
                 <RecommendationsPanel 
                   recommendations={recommendations} 
@@ -148,7 +148,7 @@ function App() {
               </div>
             </div>
 
-            {/* כפתור בניית מסלול מרחף */}
+            {/* Floating Schedule Builder Commitment Button Anchor */}
             {myTripAttractions.length > 0 && (
               <button 
                 onClick={() => setCurrentStep('planning')}
@@ -173,13 +173,13 @@ function App() {
                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)'}
                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1)'}
               >
-                בנה לו"ז טיול ({myTripAttractions.length}) ➔
+                Build Trip Itinerary ({myTripAttractions.length}) ➔
               </button>
             )}
           </>
         )}
 
-        {/* שלב 3: תכנון הלו"ז */}
+        {/* Step 3: Interactive Itinerary Hourly Grid Scheduling Planner */}
         {currentStep === 'planning' && (
           <ItineraryPlanner 
             savedAttractions={myTripAttractions} 
@@ -191,7 +191,7 @@ function App() {
           />
         )}
 
-        {/* שלב 4: סיכום הטיול (אפשר להגיע לכאן גם מהאזור האישי וגם מסיום תכנון טיול חדש) */}
+        {/* Step 4: Final Trip Itinerary Summary and Target Routing Mapping */}
         {currentStep === 'summary' && (
           <TripSummary tripId={createdTripId} />
         )}

@@ -16,8 +16,6 @@ export default function LoginForm({ onSwitchToRegister }) {
     
     try {
       await login(username, password);
-      // ברגע שההתחברות מצליחה, הסטייט של ה-user ב-Context מתעדכן 
-      // ו-App.js יעביר את המשתמש אוטומטית למסך הטיולים
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.detail || "Invalid username or password. Please try again.");

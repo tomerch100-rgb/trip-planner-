@@ -70,11 +70,15 @@ const SearchBar = ({ onSearchResults }) => {
     if (!selectedCity) return;
     setLoading(true);
     try {
-      const activeGoogleTypes = TRAVEL_CATEGORIES
+      // 🌟 Instead of using the Google types (googleTypes), we extract the human-readable names
+      const activeCategoryNames = TRAVEL_CATEGORIES
         .filter(cat => selectedCategories.includes(cat.id))
-        .flatMap(cat => cat.googleTypes);
+        .map(cat => cat.name);
 
-      const categoriesParam = activeGoogleTypes.join(',');
+      // 🌟 Connect them using " and ", or fallback to generic top attractions if empty
+      const categoriesParam = activeCategoryNames.length > 0
+        ? activeCategoryNames.join(' and ')
+        : 'Top Attractions';
 
       const response = await attractionsAPI.exploreLive(selectedCity, categoriesParam);
       

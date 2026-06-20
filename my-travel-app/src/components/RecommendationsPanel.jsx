@@ -1,7 +1,7 @@
 import React from 'react';
 
 export default function RecommendationsPanel({ recommendations, onAddToTrip }) {
-  // אם אין המלצות, לא נציג כלום
+  // If there are no recommendations, do not render anything
   if (!recommendations || recommendations.length === 0) return null;
 
   return (
@@ -16,22 +16,22 @@ export default function RecommendationsPanel({ recommendations, onAddToTrip }) {
         top: '20px',
         width: '100%',
         boxSizing: 'border-box',
-        textAlign: 'right'
+        textAlign: 'left'
       }} 
-      dir="rtl"
+      dir="ltr"
     >
       
-      {/* כותרת מזהבת */}
+      {/* Golden Header */}
       <div style={{ marginBottom: '15px', borderBottom: '1px solid #fde68a', paddingBottom: '10px' }}>
         <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#78350f', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span>🌟</span> מומלץ עבורך
+          <span>🌟</span> Recommended for you
         </h3>
         <p style={{ fontSize: '12px', color: '#92400e', marginTop: '4px', fontWeight: '500', margin: '4px 0 0 0' }}>
-          על בסיס הטיולים הקודמים שלך
+          Based on your previous trips
         </p>
       </div>
 
-      {/* רשימת האטרקציות המומלצות */}
+      {/* Recommended Attractions List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {recommendations.map(attr => (
           <div 
@@ -51,7 +51,7 @@ export default function RecommendationsPanel({ recommendations, onAddToTrip }) {
             
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <span style={{ backgroundColor: '#fef3c7', color: '#78350f', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
-                {attr.default_price ? `${attr.default_price} ₪` : 'חינם'}
+                {attr.default_price ? `${attr.default_price} ₪` : 'Free'}
               </span>
               {attr.rating > 0 && (
                 <span style={{ backgroundColor: '#f3f4f6', color: '#4b5563', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
@@ -78,7 +78,7 @@ export default function RecommendationsPanel({ recommendations, onAddToTrip }) {
               onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
               onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
             >
-              + הוסף לטיול
+              + Add to Trip
             </button>
             
           </div>

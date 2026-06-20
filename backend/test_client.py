@@ -31,7 +31,7 @@ def read_single_trip(
 ):
     trip = crud.get_trip(db=db, trip_id=trip_id, user_id=user_id)
     if not trip:
-        raise HTTPException(status_code=404, detail="הטיול לא נמצא או שאין לך הרשאה לצפות בו")
+        raise HTTPException(status_code=404, detail="The trip was not found or you do not have permission to view it")
     return trip
 
 @router.post("/plan-multi-country", response_model=schemas.TripResponse)
@@ -40,11 +40,11 @@ async def plan_trip(
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user_id)
 ):
-    # 1. בדיקת תקינות (Guard Clause)
+    # 1. Validation check (Guard Clause)
     if not trip_request.city_ids:
-        raise HTTPException(status_code=400, detail="לא נבחרו ערים לתכנון הטיול.")
+        raise HTTPException(status_code=400, detail="No cities were selected for trip planning.")
 
-    # 2. יצירת הטיול ב-DB
+    # 2. Creating the trip in the DB
     new_trip = crud.create_multi_city_trip(
         db, 
         trip_request.city_ids, 
@@ -53,10 +53,10 @@ async def plan_trip(
         user_id
     )
     
-    # 3. שליפת אטרקציות לכל הערים
+    # 3. Fetching attractions for all selected cities
     attractions = crud.get_attractions_for_cities(db, trip_request.city_ids)
     
-    # 4. החזרת תשובה
+    # 4. Returning the response
     return {
         **new_trip.__dict__,
         "attractions": attractions

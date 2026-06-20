@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { tripsAPI } from '../services/api';
-import MapView from './MapView'; // החזרנו את המפה למסך!
+import MapView from './MapView'; // Brought the map back to the screen!
 
 export default function ItineraryPlanner({ savedAttractions = [], destinationName, onTripComplete }) {
   const [tripDetails, setTripDetails] = useState(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // הלו"ז המרכזי של הטיול - מבוסס על האטרקציות שהמשתמש משבץ
+  // The main trip itinerary - based on the attractions the user schedules
   const [itinerary, setItinerary] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [maxPrice, setMaxPrice] = useState(500);
@@ -15,7 +15,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
   const [isSaving, setIsSaving] = useState(false);
 
   // ==========================================
-  // לוגיקת תאריכים
+  // Date Logic
   // ==========================================
   const handleStartPlanning = (e) => {
     e.preventDefault();
@@ -25,10 +25,10 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
     const end = new Date(endDate);
     const diff = Math.ceil((end - start) / (1000 * 3600 * 24)) + 1;
 
-    if (diff <= 0) return alert("תאריך סיום חייב להיות אחרי תאריך התחלה!");
+    if (diff <= 0) return alert("End date must be after the start date!");
 
     setTripDetails({
-      destination: destinationName || 'היעד שנבחר',
+      destination: destinationName || 'Selected Destination',
       startDate,
       endDate,
       daysCount: diff
@@ -36,7 +36,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
   };
 
   const tripDates = [];
-  const daysOfWeek = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+  const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   
   if (tripDetails) {
     let curr = new Date(tripDetails.startDate);
@@ -46,7 +46,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
       tripDates.push({
         fullDate: curr.toISOString().split('T')[0],
         dayName: daysOfWeek[curr.getDay()],
-        dayNumber: dayIndex // שומרים את מספר היום (יום 1, יום 2...)
+        dayNumber: dayIndex // Keeps the day count number (Day 1, Day 2...)
       });
       dayIndex++;
       curr.setDate(curr.getDate() + 1);
@@ -56,7 +56,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
   const HOURS = Array.from({ length: 15 }, (_, i) => `${String(i + 8).padStart(2, '0')}:00`);
 
   // ==========================================
-  // סינון אטרקציות בבנק
+  // Filtering Attractions Bank
   // ==========================================
   const filteredAttractions = savedAttractions.filter(attr => {
     const matchSearch = attr.name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -65,7 +65,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
   });
 
   // ==========================================
-  // בדיקת חפיפה (מניעת כפל שיבוץ בזמן אמת)
+  // Overlap Detection (Prevents real-time duplicate scheduling conflicts)
   // ==========================================
   const checkOverlap = (dayNumber, startTime, endTime) => {
     return itinerary.some(item => {
@@ -74,22 +74,22 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
     });
   };
 
-  // שיבוץ אטרקציה לתוך משבצת זמן בלוח
+  // Assigns an attraction to a specific time slot on the board
   const handleAssignToSlot = (dayNumber, dateStr, hour) => {
-    if (!selectedForAssign) return alert("אנא בחר קודם אטרקציה מבנק האטרקציות בצד.");
+    if (!selectedForAssign) return alert("Please select an attraction from the attraction bank on the side first.");
     
     const startTime = hour;
-    const duration = 2; // שעתיים ברירת מחדל לכל אטרקציה
+    const duration = 2; // Default 2 hours duration per attraction
     const endHourNum = parseInt(startTime.split(':')[0]) + duration;
     const endTime = `${String(endHourNum).padStart(2, '0')}:00`;
 
-    // הפעלת הבדיקה החכמה
+    // Execute smart conflict verification check
     if (checkOverlap(dayNumber, startTime, endTime)) {
-      return alert("השעה שנבחרה מתנגשת עם אטרקציה קיימת בלוח השעות!");
+      return alert("The selected hour conflicts with an existing attraction on the schedule board!");
     }
 
     const newItem = {
-      ...selectedForAssign, // שומר על כל שדות האטרקציה (כולל קואורדינטות למפה!)
+      ...selectedForAssign, // Retains all attraction properties (including map coordinates!)
       id: selectedForAssign.id,
       name: selectedForAssign.name,
       day_number: dayNumber,
@@ -100,7 +100,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
     };
 
     setItinerary([...itinerary, newItem]);
-    setSelectedForAssign(null); // איפוס הבחירה
+    setSelectedForAssign(null); // Reset selection state
   };
 
   const handleRemoveItem = (attractionId, dayNumber, startTime) => {
@@ -108,10 +108,10 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
   };
 
   // ==========================================
-  // שמירת הלו"ז הסופי ל-Backend
+  // Saving the Final Itinerary to Backend
   // ==========================================
   const handleSaveItinerary = async () => {
-    if (itinerary.length === 0) return alert("הלוח ריק. יש לשבץ לפחות אטרקציה אחת לפני השמירה.");
+    if (itinerary.length === 0) return alert("The schedule board is empty. Please assign at least one attraction before saving.");
     setIsSaving(true);
     
     try {
@@ -140,49 +140,49 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
 
     } catch (error) {
       console.error("DEBUG Error saving trip:", error);
-      alert("שגיאה בשמירת המסלול בשרת.");
+      alert("Error occurred while saving the itinerary to the server.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // --- שלב א': בחירת תאריכים ---
+  // --- Step A: Setting Dates ---
   if (!tripDetails) {
     return (
-      <div style={{ maxWidth: '400px', margin: '50px auto', padding: '30px', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '12px', textAlign: 'right' }} dir="rtl">
-        <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px', textAlign: 'center' }}>הגדרת זמנים</h2>
-        <p style={{ color: '#666', marginBottom: '25px', textAlign: 'center' }}>מתי הטיול ל{destinationName}?</p>
+      <div style={{ maxWidth: '400px', margin: '50px auto', padding: '30px', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '12px', textAlign: 'left' }} dir="ltr">
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px', textAlign: 'center' }}>Time Settings</h2>
+        <p style={{ color: '#666', marginBottom: '25px', textAlign: 'center' }}>When is your trip to {destinationName}?</p>
         <form onSubmit={handleStartPlanning}>
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>תאריך יציאה</label>
+            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Departure Date</label>
             <input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '6px' }} />
           </div>
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>תאריך חזרה</label>
+            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Return Date</label>
             <input type="date" required value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '6px' }} />
           </div>
           <button type="submit" style={{ width: '100%', backgroundColor: '#2563eb', color: '#fff', padding: '12px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
-            צור לוח תכנון
+            Create Planner Board
           </button>
         </form>
       </div>
     );
   }
 
-  // --- שלב ב': הלוח המעודכן עם המערכת המשובצת והמפה ---
+  // --- Step B: Updated Schedule Board with Grid Tracking System and Dynamic Map ---
   return (
-    <div style={{ display: 'flex', flexDirection: 'row', width: '100%', minHeight: '85vh', backgroundColor: '#f8f9fa', boxSizing: 'border-box', fontFamily: 'sans-serif' }} dir="rtl">
+    <div style={{ display: 'flex', flexDirection: 'row', width: '100%', minHeight: '85vh', backgroundColor: '#f8f9fa', boxSizing: 'border-box', fontFamily: 'sans-serif' }} dir="ltr">
       
-      {/* סרגל צד: בנק אטרקציות */}
-      <div style={{ width: '25%', minWidth: '260px', backgroundColor: '#fff', borderLeft: '2px solid #ddd', padding: '20px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: '900', color: '#333', marginBottom: '15px', textAlign: 'right' }}>בנק אטרקציות</h2>
-        <div style={{ marginBottom: '20px', textAlign: 'right' }}>
+      {/* Sidebar Panel: Attractions Bank */}
+      <div style={{ width: '25%', minWidth: '260px', backgroundColor: '#fff', borderRight: '2px solid #ddd', padding: '20px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: '900', color: '#333', marginBottom: '15px', textAlign: 'left' }}>Attractions Bank</h2>
+        <div style={{ marginBottom: '20px', textAlign: 'left' }}>
           <input 
-            type="text" placeholder="חיפוש חופשי..." 
+            type="text" placeholder="Search attractions..." 
             style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box', marginBottom: '10px' }}
             value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
           />
-          <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '5px' }}>תקציב: עד {maxPrice}₪</label>
+          <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '5px' }}>Budget: Up to {maxPrice} ₪</label>
           <input 
             type="range" min="0" max="1500" step="50" style={{ width: '100%' }}
             value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
@@ -200,43 +200,43 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
                 backgroundColor: selectedForAssign?.id === attr.id ? '#fff6ed' : '#fff',
                 cursor: 'pointer',
                 marginBottom: '10px',
-                textAlign: 'right'
+                textAlign: 'left'
               }}
             >
               <div style={{ fontWeight: 'bold', color: '#333', fontSize: '14px' }}>{attr.name}</div>
-              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>{attr.default_price ? `${attr.default_price} ₪` : 'חינם'}</div>
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>{attr.default_price ? `${attr.default_price} ₪` : 'Free'}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* הלוח המרכזי בעיצוב מחברת קשיח */}
+      {/* Center Layout: Scheduled Planner Board */}
       <div style={{ flex: 1, padding: '25px', overflowX: 'auto', boxSizing: 'border-box' }}>
         <div style={{ minWidth: '800px', margin: '0 auto' }}>
           
-          {/* כותרת עליונה */}
+          {/* Upper Header Meta Information */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '10px', borderBottom: '2px solid #ccc' }}>
-            <div style={{ textAlign: 'right' }}>
-              <h1 style={{ fontSize: '28px', fontWeight: '900', color: '#444', margin: 0 }}>לוח תכנון שבועי</h1>
-              <div style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>יעד: <span style={{ fontWeight: 'bold' }}>{tripDetails.destination}</span></div>
+            <div style={{ textAlign: 'left' }}>
+              <h1 style={{ fontSize: '28px', fontWeight: '900', color: '#444', margin: 0 }}>Weekly Planner Board</h1>
+              <div style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>Destination: <span style={{ fontWeight: 'bold' }}>{tripDetails.destination}</span></div>
             </div>
             <button 
               onClick={handleSaveItinerary} disabled={isSaving || itinerary.length === 0}
               style={{ backgroundColor: '#333', color: '#fff', padding: '10px 24px', border: 'none', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer' }}
             >
-              {isSaving ? 'שומר...' : 'שמור מסלול'}
+              {isSaving ? 'Saving...' : 'Save Itinerary'}
             </button>
           </div>
 
-          {/* מבנה הטבלה עם גבולות מוכפפים ויציבים */}
+          {/* Table Implementation Architecture with Strict Sizing Definitions */}
           <div style={{ backgroundColor: '#fff', border: '2px solid #999', borderRadius: '8px', overflow: 'hidden', marginBottom: '30px' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', textAlign: 'right' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', textAlign: 'left' }}>
               <thead>
                 <tr style={{ backgroundColor: '#f2dbb8', borderBottom: '2px solid #888' }}>
-                  <th style={{ width: '90px', borderLeft: '1px solid #aaa', padding: '12px', color: '#333', fontWeight: 'bold', fontSize: '14px', textAlign: 'center' }}>שעה</th>
+                  <th style={{ width: '90px', borderRight: '1px solid #aaa', padding: '12px', color: '#333', fontWeight: 'bold', fontSize: '14px', textAlign: 'center' }}>Time</th>
                   {tripDates.map((dateObj) => (
-                    <th key={dateObj.fullDate} style={{ borderLeft: '1px solid #aaa', padding: '12px', color: '#222', fontWeight: 'bold', textAlign: 'center' }}>
-                      <div style={{ fontSize: '16px' }}>יום {dateObj.dayNumber} ({dateObj.dayName})</div>
+                    <th key={dateObj.fullDate} style={{ borderRight: '1px solid #aaa', padding: '12px', color: '#222', fontWeight: 'bold', textAlign: 'center' }}>
+                      <div style={{ fontSize: '16px' }}>Day {dateObj.dayNumber} ({dateObj.dayName})</div>
                       <div style={{ fontSize: '11px', fontWeight: 'normal', color: '#555', marginTop: '2px' }}>{dateObj.fullDate}</div>
                     </th>
                   ))}
@@ -245,12 +245,12 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
               <tbody>
                 {HOURS.map(hour => (
                   <tr key={hour} style={{ borderBottom: '1px solid #bbb' }}>
-                    {/* עמודת השעה */}
-                    <td style={{ borderLeft: '1px solid #aaa', backgroundColor: '#fcfaf7', padding: '10px', fontSize: '13px', fontWeight: 'bold', color: '#666', textAlign: 'center', height: '65px', boxSizing: 'border-box' }}>
+                    {/* Time Column Slot */}
+                    <td style={{ borderRight: '1px solid #aaa', backgroundColor: '#fcfaf7', padding: '10px', fontSize: '13px', fontWeight: 'bold', color: '#666', textAlign: 'center', height: '65px', boxSizing: 'border-box' }}>
                       {hour}
                     </td>
                     
-                    {/* תאי הימים - מציגים את השיבוץ האמיתי מתוך ה-itinerary state */}
+                    {/* Calendar Grid Day Units - Tracks matching elements internally from the itinerary list */}
                     {tripDates.map(dateObj => {
                       const scheduledItem = itinerary.find(item => 
                         item.day_number === dateObj.dayNumber && item.start_time <= hour && item.end_time > hour
@@ -261,19 +261,19 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
                       if (scheduledItem) {
                         if (isStartHour) {
                           return (
-                            <td key={`${dateObj.fullDate}-${hour}`} style={{ borderLeft: '1px solid #aaa', padding: '4px', verticalAlign: 'top', height: '65px', boxSizing: 'border-box' }}>
+                            <td key={`${dateObj.fullDate}-${hour}`} style={{ borderRight: '1px solid #aaa', padding: '4px', verticalAlign: 'top', height: '65px', boxSizing: 'border-box' }}>
                               <div style={{ backgroundColor: '#4b5563', color: '#fff', borderRadius: '4px', padding: '8px', height: '100%', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxSizing: 'border-box', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                                 <div style={{ fontWeight: 'bold', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{scheduledItem.name}</div>
                                 <div style={{ fontSize: '10px', color: '#cbd5e1', marginTop: '2px' }}>{scheduledItem.start_time} - {scheduledItem.end_time}</div>
                                 <button 
                                   onClick={(e) => { e.stopPropagation(); handleRemoveItem(scheduledItem.id, dateObj.dayNumber, scheduledItem.start_time); }}
-                                  style={{ position: 'absolute', top: '4px', left: '4px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '16px', height: '16px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+                                  style={{ position: 'absolute', top: '4px', right: '4px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '16px', height: '16px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
                                 >✕</button>
                               </div>
                             </td>
                           );
                         } else {
-                          return <td key={`${dateObj.fullDate}-${hour}`} style={{ borderLeft: '1px solid #aaa', backgroundColor: '#f3f4f6', height: '65px' }}></td>;
+                          return <td key={`${dateObj.fullDate}-${hour}`} style={{ borderRight: '1px solid #aaa', backgroundColor: '#f3f4f6', height: '65px' }}></td>;
                         }
                       }
 
@@ -282,7 +282,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
                           key={`${dateObj.fullDate}-${hour}`} 
                           onClick={() => handleAssignToSlot(dateObj.dayNumber, dateObj.fullDate, hour)}
                           style={{
-                            borderLeft: '1px solid #aaa',
+                            borderRight: '1px solid #aaa',
                             height: '65px',
                             cursor: 'pointer',
                             backgroundColor: selectedForAssign ? '#fffbeb' : 'transparent',
@@ -300,21 +300,21 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
               </tbody>
             </table>
             
-            {/* תחתית הלוח */}
+            {/* Planner Bottom Metadata Container */}
             <div style={{ backgroundColor: '#f2dbb8', borderTop: '2px solid #888', padding: '10px', fontWeight: 'bold', color: '#333', fontSize: '13px' }}>
-              משימות עיקריות והערות:
+              Main Tasks and Notes:
             </div>
             <div style={{ padding: '12px', backgroundColor: '#fff' }}>
               <textarea 
                 style={{ width: '100%', height: '60px', padding: '8px', fontSize: '13px', color: '#444', border: '1px solid #ddd', borderRadius: '6px', resize: 'none', backgroundColor: '#fafafa', boxSizing: 'border-box' }}
-                placeholder="ניתן להוסיף כאן טקסט חופשי או נקודות חשובות לטיול..."
+                placeholder="You can append free-form text properties or critical target trip logs here..."
               />
             </div>
           </div>
 
-          {/* מפת המסלול - החזרנו אותה והיא מתעדכנת דינמית לפי השיבוצים בלוח השעות */}
-          <div style={{ marginTop: '25px', textAlign: 'right' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#333', marginBottom: '10px' }}>מפת המסלול המשובץ</h3>
+          {/* Interactive Route Mapping Layer - Updates dynamically based on changes to the itinerary layout parameters */}
+          <div style={{ marginTop: '25px', textAlign: 'left' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#333', marginBottom: '10px' }}>Scheduled Route Map</h3>
             <MapView attractions={itinerary} />
           </div>
 

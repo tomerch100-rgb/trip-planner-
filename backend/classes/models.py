@@ -47,7 +47,7 @@ class Attraction(Base):
     category_id = Column(Integer, ForeignKey("attraction_categories.id"))
     rating = Column(Float, default=0.0)
     google_place_id = Column(String(255), nullable=True)
-    
+    default_price = Column(Float, default=0.0)
     city = relationship("City", back_populates="attractions")
 
 class Country(Base):

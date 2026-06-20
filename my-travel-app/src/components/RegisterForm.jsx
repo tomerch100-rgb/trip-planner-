@@ -21,26 +21,26 @@ const RegisterForm = ({ onSwitchToLogin }) => {
     setError('');
 
     try {
-      // קריאה לראוטר של ה-Backend שבנינו
+      // Call to the Backend router we built
       await API.post('/auth/register', formData);
-      alert('נרשמת בהצלחה! עכשיו אפשר להתחבר');
-      onSwitchToLogin(); // מעביר אותך אוטומטית למסך לוגין
+      alert('Registration successful! You can now log in.');
+      onSwitchToLogin(); // Automatically switches you to the login screen
     } catch (err) {
-      setError(err.response?.data?.detail || 'שגיאה בהרשמה');
+      setError(err.response?.data?.detail || 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10" dir="rtl">
-      <h2 className="text-2xl font-bold text-center mb-6">הרשמה למערכת</h2>
+    <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10" dir="ltr">
+      <h2 className="text-2xl font-bold text-center mb-6">Create an Account</h2>
 
       {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-gray-700 mb-1">שם משתמש</label>
+          <label className="block text-gray-700 mb-1">Username</label>
           <input
             type="text"
             name="username"
@@ -52,7 +52,7 @@ const RegisterForm = ({ onSwitchToLogin }) => {
         </div>
 
         <div>
-          <label className="block text-gray-700 mb-1">אימייל</label>
+          <label className="block text-gray-700 mb-1">Email</label>
           <input
             type="email"
             name="email"
@@ -64,7 +64,7 @@ const RegisterForm = ({ onSwitchToLogin }) => {
         </div>
 
         <div>
-          <label className="block text-gray-700 mb-1">סיסמה</label>
+          <label className="block text-gray-700 mb-1">Password</label>
           <input
             type="password"
             name="password"
@@ -80,17 +80,17 @@ const RegisterForm = ({ onSwitchToLogin }) => {
           disabled={loading}
           className="w-full bg-green-600 text-white py-2 rounded font-medium hover:bg-green-700 transition"
         >
-          {loading ? 'נרשם...' : 'הרשם'}
+          {loading ? 'Registering...' : 'Register'}
         </button>
 
         <p className="text-center mt-4 text-sm">
-          כבר יש לך משתמש?{' '}
+          Already have an account?{' '}
           <button
             type="button"
             onClick={onSwitchToLogin}
             className="text-blue-600 underline"
           >
-            התחבר
+            Login
           </button>
         </p>
       </form>

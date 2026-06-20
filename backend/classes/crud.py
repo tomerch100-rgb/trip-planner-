@@ -99,52 +99,6 @@ def create_new_attraction(db: Session, attraction_data: schemas.AttractionCreate
     
     return new_attraction
 
-def save_google_results_to_db(db: Session, google_results: list, city_id: int):
-    """
-    Parses raw Google Places API results, maps them to database models, 
-    persists them, and returns the newly created attraction records.
-    """
-    saved_attractions = [] 
-    
-    for place in google_results:
-        name = place.get('name') or 'Unknown'
-        existing = db.query(models.Attraction).filter_by(name=name, city_id=city_id).first()
-        
-        if existing:
-            saved_attractions.append(existing)
-            continue
-        
-        google_types = place.get('categories', []) # או 'types' אם זה השם ב-JSON שקיבלת
-        cat_id = get_db_category_id_from_google_types(db, google_types)
-    for item in google_results:
-        # Smart coordinate extraction: handles both nested 'geometry' objects 
-        # (standard Google Places structure) and flat key-value pairs
-        geometry = item.get('geometry', {})
-        location = geometry.get('location', {})
-        
-        lat = location.get('lat') or item.get('latitude') or item.get('lat')
-        lng = location.get('lng') or item.get('longitude') or item.get('lng')
-        
-        new_attr = models.Attraction(
-            name=name,
-            city_id=city_id,
-            address=place.get('formatted_address') or 'כתובת לא ידועה',
-            latitude=place.get('latitude'),
-            longitude=place.get('longitude'),
-            category_id=cat_id,
-            default_price=place.get('default_price', 0.0)
-
-        )
-        db.add(new_attr)
-        saved_attractions.append(new_attr)
-    
-    db.commit()
-    # ריענון אובייקטים
-    for attr in saved_attractions:
-        if attr.id is None:
-            db.refresh(attr)
-            
-    return saved_attractions
 
 def get_filtered_attractions(
     db: Session, 
@@ -372,48 +326,53 @@ def get_db_category_id_from_google_types(db: Session, google_types: list):
     # Return None if Google's types are too obscure or don't match our specific app logic
     return None
 
-
 def save_google_results_to_db(db: Session, google_results: list, city_id: int):
     """
-    Parses and persists raw Google Places results into the database.
-    Includes duplicate prevention, dynamic category mapping, and coordinate extraction.
+    Parses and stores Google results in the database.
+    Includes duplicate prevention, dynamic category mapping, coordinate extraction, and price saving.
     """
     print(f"DEBUG: Starting to process {len(google_results)} Google results for city_id: {city_id}")
     saved_attractions = [] 
     
     for place in google_results:
-        name = place.get('name') or 'Unknown'
+        # Safe extraction of the attraction name
+        name = place.get('name') or place.get('displayName', {}).get('text') or 'Unknown'
         
-        # 1. Deduplication Check: Prevent the same attraction from being saved twice in the same city
+        # 1. Duplicate check to prevent saving the same attraction twice in the same city
         existing = db.query(models.Attraction).filter_by(name=name, city_id=city_id).first()
         if existing:
             saved_attractions.append(existing)
             continue
         
-        # 2. Extract types and map to a local Category ID
+        # 2. Extract Google categories and convert them to our local ID
         google_types = place.get('categories', []) or place.get('types', [])
         cat_id = get_db_category_id_from_google_types(db, google_types)
         
-        # Safety Net: If no matching category is found, default to ID 2 (Nature/General Attractions)
-        # to ensure the recommendation engine has categorical data to work with.
+        # Fallback: if Google returned an unknown category, assign it to a general category (ID 2)
         if cat_id is None:
             cat_id = 2
 
-        # 3. Object Instantiation: Intentionally excluding 'rating' and 'google_place_id' 
-        # as they are currently not defined in the SQLAlchemy Attraction model.
+        # 3. Object instantiation - saving the price here!
         new_attr = models.Attraction(
             name=name,
             city_id=city_id,
-            address=place.get('address') or place.get('formatted_address') or 'Unknown Address',
+            address=place.get('address') or place.get('formattedAddress') or 'Unknown Address',
             latitude=place.get('latitude'),
             longitude=place.get('longitude'),
-            category_id=cat_id
+            category_id=cat_id,
+            default_price=place.get('default_price', 0.0)  # <-- Line that fixes the bug and saves the price
         )
         db.add(new_attr)
         saved_attractions.append(new_attr)
     
-    # Perform a single bulk commit at the end to optimize database transaction performance
+    # Unified bulk commit to improve performance
     db.commit()
+    
+    # Refresh objects to obtain the newly generated ID from PostgreSQL/SQLite for each attraction
+    for attr in saved_attractions:
+        if attr.id is None:
+            db.refresh(attr)
+            
     print(f"DEBUG: Operation completed! Successfully saved {len(saved_attractions)} unique attractions.")
     
     return saved_attractions

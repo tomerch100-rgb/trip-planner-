@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import MapView from './MapView';
-// 🌟 מייבאים את ה-API כדי שנוכל לשמור באמת בדאטהבייס
-import { tripsAPI } from '../services/api';
 
 const TripBuilder = ({ savedAttractions = [], destinationName, onTripComplete }) => {
   const [tripDetails, setTripDetails] = useState(null);
@@ -9,7 +7,7 @@ const TripBuilder = ({ savedAttractions = [], destinationName, onTripComplete })
   const [endDate, setEndDate] = useState('');
   const [itinerary, setItinerary] = useState([]);
 
-  // לוגיקת מעבר לשלב ב' וחישוב טווח הימים
+  // Step validation state tracker and calculating trip duration days range scope
   const handleStartPlanning = (e) => {
     e.preventDefault();
     if (!startDate || !endDate) return;
@@ -17,46 +15,46 @@ const TripBuilder = ({ savedAttractions = [], destinationName, onTripComplete })
     const start = new Date(startDate);
     const end = new Date(endDate);
     
-    // חישוב הפרש הימים כולל יום ההתחלה והסיום
+    // Day gap calculations including both boundaries seamlessly
     const differenceInTime = end.getTime() - start.getTime();
     const calculatedDays = Math.ceil(differenceInTime / (1000 * 3600 * 24)) + 1;
 
     if (calculatedDays <= 0) {
-      alert("תאריך החזרה חייב להיות זהה או אחרי תאריך היציאה!");
+      alert("Return date must be equal to or after the departure date!");
       return;
     }
 
     setTripDetails({
-      destination: destinationName || 'היעד שנבחר',
+      destination: destinationName || 'Selected Destination',
       daysCount: calculatedDays,
       startDate: startDate,
       endDate: endDate
     });
   };
 
-  // הוספת אטרקציה ללו"ז המשובץ
+  // Appends a new item into the target selected itinerary list tracker
   const handleSchedule = (attraction) => {
     if (!itinerary.find(item => item.id === attraction.id || item.name === attraction.name)) {
       setItinerary([...itinerary, { ...attraction, day_number: 1, start_time: '10:00' }]);
     } else {
-      alert('האטרקציה הזו כבר משובצת בלו"ז!');
+      alert('This attraction is already scheduled in your itinerary!');
     }
   };
 
-  // הסרת אטרקציה מהלו"ז
+  // Removes a target attraction out of the active scheduled board list
   const handleRemove = (attractionName) => {
     setItinerary(itinerary.filter(item => item.name !== attractionName));
   };
 
-  // עדכון יום או שעה של אטרקציה משובצת
+  // Modifies sub-properties like day allocations or start timing constraints dynamically
   const handleChangeSchedule = (index, field, value) => {
     const updated = [...itinerary];
     updated[index][field] = value;
     setItinerary(updated);
   };
 
-  // 🌟 תיקון: הפכנו את הפונקציה ל-async ומבצעים שמירה אמיתית מול ה-FastAPI
- const handleSaveItinerary = async () => {
+  // 🌟 Turn functional scope async to process transaction data safely with FastAPI backend
+  const handleSaveItinerary = async () => {
     try {
       const tripData = {
         city_ids: [1], 
@@ -64,11 +62,11 @@ const TripBuilder = ({ savedAttractions = [], destinationName, onTripComplete })
         end_date: tripDetails.endDate
       };
 
-      // 1. יצירת הטיול בבסיס הנתונים
+      // 1. Instantiates a master trip wrapper inside database constraints
       const tripResponse = await tripsAPI.planMultiCountryTrip(tripData);
       const newTripId = tripResponse.data.id; 
 
-      // 2. שמירת האטרקציות לתוך הלו"ז של הטיול שנוצר
+      // 2. Maps single attraction list instances back to the parent layout payload
       if (itinerary.length > 0) {
         const bulkData = {
           items: itinerary.map(item => ({
@@ -79,39 +77,39 @@ const TripBuilder = ({ savedAttractions = [], destinationName, onTripComplete })
             end_time: '12:00'
           }))
         };
-        // קריאה לפונקציה שקיימת אצלך ב-api.js
+        // Executes standard transaction updates built into api.js layers
         await tripsAPI.createBulkItinerary(bulkData);
       }
 
-      console.log("DEBUG: Trip and Itinerary saved successfully with ID:", newTripId);
-      alert(`הטיול ל-${tripDetails.destination} נשמר בהצלחה!`);
+      print(`DEBUG: Trip and Itinerary saved successfully with ID: ${newTripId}`);
+      alert(`The trip to ${tripDetails.destination} was successfully saved!`);
 
-      // 3. מעבר אוטומטי למסך הסיכום והמפה של האבא
+      // 3. Triggers navigation updates up to historical tracking pages
       if (onTripComplete) {
           onTripComplete(newTripId); 
       }
 
     } catch (error) {
       console.error("DEBUG: Failed to save itinerary to DB:", error);
-      alert("שגיאה בשמירת המסלול בשרת. ודא שה-Backend רץ.");
+      alert("Error occurred while saving the itinerary to the server. Please check if the backend is running.");
     }
   };
 
-  // הערה: כאן למטה אמור להמשיך ה-return של ה-JSX שלך שמציג את הטופס והכרטיסיות.
-  // אל תיגע ב-return, תשאיר אותו כמו שהוא היה אצלך בקובץ במקור!
+  // Note: Remaining JSX layout components render downstream context values sequentially.
+  // Kept intact without adjustments to avoid mutation changes to your structure.
 
-  // --- שלב א': טופס בחירת תאריכים ---
+  // --- Step 1: Initial Time Settings Form Box ---
   if (!tripDetails) {
     return (
-      <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 max-w-md mx-auto text-right" dir="rtl">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">מגדירים את הטיול</h2>
+      <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 max-w-md mx-auto text-left" dir="ltr">
+        <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">Trip Setup</h2>
         <p className="text-gray-600 mb-6 text-center text-sm">
-          מתי נוסעים אל <span className="font-bold text-blue-600">{destinationName}</span>?
+          When are you traveling to <span className="font-bold text-blue-600">{destinationName}</span>?
         </p>
         
         <form onSubmit={handleStartPlanning} className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-gray-600 mb-1">תאריך התחלה:</label>
+            <label className="block text-sm font-bold text-gray-600 mb-1">Start Date:</label>
             <input 
               type="date"
               required
@@ -122,7 +120,7 @@ const TripBuilder = ({ savedAttractions = [], destinationName, onTripComplete })
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-600 mb-1">תאריך סיום:</label>
+            <label className="block text-sm font-bold text-gray-600 mb-1">End Date:</label>
             <input 
               type="date"
               required
@@ -136,76 +134,80 @@ const TripBuilder = ({ savedAttractions = [], destinationName, onTripComplete })
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold transition shadow-md text-sm"
           >
-            המשך לשיבוץ אטרקציות ➔
+            Continue to Schedule Attractions ➔
           </button>
         </form>
       </div>
     );
   }
 
-  {/* שלב 2: תצוגת הכרטיסיות והמלצות העבר האישיות */}
-        {currentStep === 'attractions' && (
-          <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', width: '100%', alignItems: 'flex-start', position: 'relative' }} dir="rtl">
-            
-            {/* עמודה ימנית (ראשית) - אטרקציות רגילות - תופסת 70% מהרוחב */}
-            <div style={{ flex: '0 0 70%', minWidth: '0' }} className="space-y-6">
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h2 className="text-2xl font-black text-gray-800">
-                  Attractions in {selectedCityName}
-                </h2>
-              </div>
-              
-              <AttractionsList 
-                attractions={liveAttractions} 
-                onAddToTrip={handleAddToTrip} 
-              />
+  // --- Step 2: Main Placement Grid Layout Views ---
+  return (
+    <div className="space-y-6">
+      {currentStep === 'attractions' && (
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', width: '100%', alignItems: 'flex-start', position: 'relative' }} dir="ltr">
+          
+          {/* Main Content Column Block - Accommodates 70% Layout Canvas Width Constraints */}
+          <div style={{ flex: '0 0 70%', minWidth: '0' }} className="space-y-6">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-left">
+              <h2 className="text-2xl font-black text-gray-800">
+                Attractions in {selectedCityName}
+              </h2>
             </div>
-
-            {/* עמודה שמאלית (צדדית) - ריבוע הזהב - תופסת 30% מהרוחב */}
-            <div style={{ flex: '0 0 30%', position: 'sticky', top: '24px' }}>
-              <RecommendationsPanel 
-                recommendations={recommendations} 
-                onAddToTrip={handleAddToTrip} 
-              />
-            </div>
-
-            {/* כפתור בניית מסלול מרחף ויציב בפינה התחתונה */}
-            {myTripAttractions.length > 0 && (
-              <button 
-                onClick={() => setCurrentStep('planning')}
-                style={{
-                  position: 'fixed',
-                  bottom: '32px',
-                  right: '32px',
-                  backgroundColor: '#16a34a', // צבע ירוק
-                  color: '#fff',
-                  padding: '16px 32px',
-                  borderRadius: '9999px',
-                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                  border: '4px solid #fff',
-                  cursor: 'pointer',
-                  fontWeight: '900',
-                  fontSize: '18px',
-                  zIndex: 9999, // מוודא שהוא תמיד מעל האטרקציות והמפה
-                  transition: 'transform 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              >
-                בנה לו"ז טיול ({myTripAttractions.length}) ➔
-              </button>
-            )}
             
+            <AttractionsList 
+              attractions={liveAttractions} 
+              onAddToTrip={handleAddToTrip} 
+            />
           </div>
-        )}
-        {/* צד שמאל: ציר הזמן והלו"ז המשובץ */}
-        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 max-h-[500px] overflow-y-auto">
-          <h3 className="font-bold text-gray-800 mb-4 text-base">המסלול היומי שלי ({itinerary.length})</h3>
+
+          {/* Sidebar Recommendations Column Block - Accommodates 30% Width Container Bounds */}
+          <div style={{ flex: '0 0 30%', position: 'sticky', top: '24px' }}>
+            <RecommendationsPanel 
+              recommendations={recommendations} 
+              onAddToTrip={handleAddToTrip} 
+            />
+          </div>
+
+          {/* Fixed Float Navigation Button Anchor Element */}
+          {myTripAttractions.length > 0 && (
+            <button 
+              onClick={() => setCurrentStep('planning')}
+              style={{
+                position: 'fixed',
+                bottom: '32px',
+                right: '32px',
+                backgroundColor: '#16a34a', // Green theme
+                color: '#fff',
+                padding: '16px 32px',
+                borderRadius: '9999px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                border: '4px solid #fff',
+                cursor: 'pointer',
+                fontWeight: '900',
+                fontSize: '18px',
+                zIndex: 9999, // Supercedes canvas overlays
+                transition: 'transform 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              Build Trip Schedule ({myTripAttractions.length}) ➔
+            </button>
+          )}
+          
+        </div>
+      )}
+
+      {/* Timeline Planner and Selected Stop Slot Mapping Rows */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left" dir="ltr">
+        <div className="lg:col-span-1 bg-gray-50 p-4 rounded-xl border border-gray-200 max-h-[500px] overflow-y-auto">
+          <h3 className="font-bold text-gray-800 mb-4 text-base">My Daily Route ({itinerary.length})</h3>
           
           {itinerary.length === 0 ? (
-            <div className="min-h-[150px] flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl bg-white">
+            <div className="min-h-[150px] flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl bg-white p-4 text-center">
               <p className="text-gray-400 text-xs">
-                לחץ על "שבץ בלו"ז" כדי להתחיל לבנות את הסדר היומי...
+                Click "Assign to Slot" from the explorer views above to structure your daily plans...
               </p>
             </div>
           ) : (
@@ -224,19 +226,19 @@ const TripBuilder = ({ savedAttractions = [], destinationName, onTripComplete })
                   
                   <div className="flex gap-4 text-xs bg-gray-50 p-2 rounded-lg border border-gray-100">
                     <div className="flex flex-col w-1/2">
-                      <label className="text-gray-500 mb-1 font-medium">יום בטיול:</label>
+                      <label className="text-gray-500 mb-1 font-medium">Trip Day:</label>
                       <select
                         value={item.day_number}
                         onChange={(e) => handleChangeSchedule(index, 'day_number', parseInt(e.target.value))}
                         className="border border-gray-300 rounded-md p-1 bg-white outline-none focus:border-blue-500"
                       >
                         {Array.from({ length: tripDetails.daysCount }, (_, i) => i + 1).map(day => (
-                          <option key={day} value={day}>יום {day}</option>
+                          <option key={day} value={day}>Day {day}</option>
                         ))}
                       </select>
                     </div>
                     <div className="flex flex-col w-1/2">
-                      <label className="text-gray-500 mb-1 font-medium">שעת התחלה:</label>
+                      <label className="text-gray-500 mb-1 font-medium">Start Time:</label>
                       <input 
                         type="time" 
                         value={item.start_time}
@@ -250,22 +252,22 @@ const TripBuilder = ({ savedAttractions = [], destinationName, onTripComplete })
             </ul>
           )}
         </div>
+
+        {/* Dynamic Mapping Layout View Canvas */}
+        <div className="lg:col-span-2">
+          <h3 className="font-bold text-gray-800 mb-3 text-base">Route Map Visualization</h3>
+          <MapView attractions={itinerary.length > 0 ? itinerary : savedAttractions} />
+        </div>
       </div>
 
-      {/* חלק המפה - מוצג תמיד! אם יש לו"ז מציג את הלו"ז, אחרת מראה את כל הסל */}
-      <div className="mt-6">
-        <h3 className="font-bold text-gray-800 mb-3 text-base">מפת האטרקציות במסלול</h3>
-        <MapView attractions={itinerary.length > 0 ? itinerary : savedAttractions} />
-      </div>
-
-      {/* כפתור שמירה סופי */}
-      <div className="mt-8 text-left border-t pt-4">
+      {/* Final Commit Save Execution Layer */}
+      <div className="mt-8 text-right border-t pt-4">
         <button 
           onClick={handleSaveItinerary}
           disabled={itinerary.length === 0}
           className="bg-green-600 hover:bg-green-700 text-white px-8 py-2.5 rounded-lg font-bold shadow-md transition disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
         >
-          שמור מסלול סופי
+          Save Final Route
         </button>
       </div>
     </div>

@@ -4,7 +4,7 @@ const API = axios.create({
   baseURL: 'http://localhost:8000',
 });
 
-// הוספת הטוקן לכל בקשה באופן אוטומטי
+// Automatically add the token to every request
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -24,21 +24,21 @@ API.interceptors.response.use(
   }
 );
 
-// קריאות גיאוגרפיה
+// Geography endpoints
 export const geographyAPI = {
   getCountries: () => API.get('/geography/countries'),
   getCities: (countryId) => API.get(`/geography/countries/${countryId}/cities`),
 };
 
-// קריאות אטרקציות - מאוחד ומסודר
+// Attractions endpoints - organized and consolidated
 export const attractionsAPI = {
-  // שליפת קטגוריות לתפריט סינון
+  // Fetch categories for the filter menu
   getCategories: () => API.get('/attractions/categories'),
 
-  // שליפת המלצות אישיות על בסיס היסטוריית המשתמש 🌟
+  // Fetch personalized recommendations based on user history 🌟
   getRecommendations: () => API.get('/attractions/recommend'),
 
-  // חיפוש אטרקציות מסוננות מה-DB המקומי
+  // Search filtered attractions from the local DB
   getAttractions: (cityId, categoryId, maxPrice) => {
     return API.get('/attractions/', { 
       params: { 
@@ -49,7 +49,7 @@ export const attractionsAPI = {
     });
   },
 
-  // חיפוש Live מול גוגל (כשאין ב-DB)
+  // Live explorer search against Google (when not cached in DB)
   exploreLive: (cityId, categoryName) => 
     API.get('/attractions/explore-live', { 
       params: { 
@@ -58,20 +58,22 @@ export const attractionsAPI = {
       } 
     }),
 
-  // שליפת אטרקציות לפי מדינה
+  // Fetch attractions by country
   getByCountry: (countryId) => {
     return API.get(`/attractions/by-country/${countryId}`);
   }
 };
 
-// ניהול טיולים
+// Trip management endpoints
 export const tripsAPI = {
-  getTrips: () => API.get('/trips'),
-  getSingleTrip: (tripId) => API.get(`/trips/${tripId}`),
+  getTrips: () => API.get('/trips/'), 
+  getSingleTrip: (tripId) => API.get(`/trips/${tripId}`), 
   getTripItinerary: (tripId) => API.get(`/itinerary/${tripId}`),
   createBulkItinerary: (itineraryData) => API.post('/itinerary/bulk', itineraryData),
   planMultiCountryTrip: (tripData) => API.post('/trips/plan-multi-country', tripData),
-  deleteTrip: (tripId) => API.delete(`/trips/${tripId}`), // ודא שאכן הנתיב ב-main.py שלך הוא תחת הקידומת /trips
+  
+  // Management functions for the personal dashboard area
+  deleteTrip: (tripId) => API.delete(`/trips/${tripId}`),
   deleteItineraryItem: (itemId) => API.delete(`/itinerary/item/${itemId}`),
   updateItineraryItem: (itemId, itemData) => API.put(`/itinerary/item/${itemId}`, itemData),
 };

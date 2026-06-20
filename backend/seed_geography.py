@@ -14,7 +14,7 @@ API_URL = "https://countriesnow.space/api/v0.1/countries"
 
 def fetch_geography_data():
     """
-    Fetches country and city data from the external API.
+    Its purpose is to fetch country and city data from the external API.
     Returns a list of dictionaries containing countries and their cities, or None if failed.
     """
     logging.info("Fetching data from the global geography API...")
@@ -45,42 +45,42 @@ def seed_database():
     try:
         logging.info("Starting database seeding process for ALL countries...")
         
-        # שלפנו מראש את המדינות והערים שכבר קיימות כדי לא לעשות שאילתות בלולאה (חוסך המון זמן רשת מול Neon)
+        # Pre-fetched existing countries and cities to avoid looping queries (saves substantial network time vs Neon)
         existing_countries_dict = {c.name: c.id for c in db.query(Country).all()}
         
-        # לולאה על כל המדינות בעולם (הסרנו את ה- :5)
+        # Loop through all countries in the world (removed the :5 slice)
         for item in raw_data:
             country_name = item["country"]
             country_code = item.get("iso2", "XX")
             cities_list = item["cities"]
             
-            # בדיקה מהירה מהזיכרון המקומי במקום שאילתה למסד הנתונים
+            # Fast check from local memory instead of querying the database
             if country_name not in existing_countries_dict:
                 new_country = Country(name=country_name, country_code=country_code)
                 db.add(new_country)
-                db.flush()  # מייצר ID מיידי
+                db.flush()  # Generates immediate ID
                 country_id = new_country.id
                 existing_countries_dict[country_name] = country_id
                 logging.info(f"Inserted country: {country_name}")
             else:
                 country_id = existing_countries_dict[country_name]
 
-            # שליפת הערים שכבר קיימות במאגר למדינה הזו (למניעת כפילויות בריצה חוזרת)
+            # Fetching cities that already exist in the database for this country (to prevent duplicates on re-runs)
             existing_cities = set(res[0] for res in db.query(City.name).filter(City.country_id == country_id).all())
 
-            # הכנת רשימת הערים החדשות
+            # Preparing the list of new cities
             cities_to_add = []
             for city_name in cities_list:
                 if city_name and city_name not in existing_cities:
                     cities_to_add.append(City(name=city_name, country_id=country_id))
-                    existing_cities.add(city_name) # מונע כפילויות בתוך אותו המערך החיצוני
+                    existing_cities.add(city_name) # Prevents duplicates within the same external array
             
-            # bulk insert מהיר לכל עיר ועיר
+            # Fast bulk insert for every single city
             if cities_to_add:
                 db.bulk_save_objects(cities_to_add)
                 logging.info(f"Bulk inserted {len(cities_to_add)} cities for {country_name}")
         
-        # שמירת כל השינויים בצורה סופית
+        # Saving all modifications finally
         db.commit()
         logging.info("Database seeding completed successfully for the entire world!")
         

@@ -14,8 +14,8 @@ router = APIRouter(
 @router.get("/countries", response_model=List[CountryResponse])
 def get_countries(db: Session = Depends(get_db)):
     """
-    שולף את כל המדינות הקיימות במערכת.
-    משמש לשלב הראשון - בחירת ארץ ב-Frontend.
+    Retrieves all existing countries in the system.
+    Used for the first step - selecting a country in the Frontend.
     """
     return db.query(Country).order_by(Country.name).all()
 
@@ -23,11 +23,11 @@ def get_countries(db: Session = Depends(get_db)):
 @router.get("/countries/{country_id}/cities", response_model=List[CityGeographyResponse])
 def get_cities_by_country(country_id: int, db: Session = Depends(get_db)):
     """
-    שולף את כל הערים השייכות למדינה ספציפית.
-    ברגע שהמשתמש בוחר ארץ, הפרונטאנד קורא לנתיב הזה כדי להציג רק את הערים שלה.
+    Retrieves all cities belonging to a specific country.
+    Once the user selects a country, the frontend calls this route to display only its cities.
     """
     country = db.query(Country).filter(Country.id == country_id).first()
     if not country:
-        raise HTTPException(status_code=404, detail="המדינה המבוקשת לא נמצאה")
+        raise HTTPException(status_code=404, detail="The requested country was not found")
         
     return db.query(City).filter(City.country_id == country_id).order_by(City.name).all()

@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 countriesnow_API_URL = "https://countriesnow.space/api/v0.1/countries"
 
 def fetch_geography_data():
-    logging.info("שואב נתונים מה-API החיצוני...")
+    logging.info("Fetching data from the external API...")
     try:
         response = requests.get(countriesnow_API_URL)
         if response.status_code == 200:
@@ -23,7 +23,7 @@ def seed_database():
 
     db = SessionLocal()
     try:
-        # לוקחים 5 מדינות רק כדי למלא נתונים ראשוניים לבדיקה
+        # Taking 5 countries just to populate initial data for testing
         for item in raw_data[:5]:
             country_name = item["country"]
             country_code = item.get("iso2", "XX")
@@ -47,7 +47,7 @@ def seed_database():
                 db.bulk_save_objects(cities_to_add)
 
         db.commit()
-        logging.info("ההזרקה מה-API לדאטה-בייס הסתיימה בהצלחה!")
+        logging.info("Database seeding from API completed successfully!")
     except Exception as e:
         db.rollback()
     finally:

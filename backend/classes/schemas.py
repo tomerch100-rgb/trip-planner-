@@ -29,7 +29,7 @@ class UserLoginResponse(BaseModel):
 class TripCreate(BaseModel):
     """Payload for initiating a standard single-destination trip."""
     city_id: Optional[int] = None   # Allowed to be None for country-wide trips
-    country_id: Optional[int] = None # Added to match the SQLAlchemy model and create_trip function 🌟
+    country_id: Optional[int] = None # Added to match the SQLAlchemy model and create_trip function 
     start_date: date
     end_date: date
 
@@ -50,7 +50,7 @@ class MultiCityTripRequest(BaseModel):
 # --- Attraction Schemas (Fixed Duplication) ---
 
 class AttractionLightResponse(BaseModel):
-    """Lightweight response model for basic Attraction data, preventing name collisions. 🌟"""
+    """Lightweight response model for basic Attraction data, preventing name collisions. """
     id: int
     name: str
     city_id: int | None = None
@@ -58,7 +58,7 @@ class AttractionLightResponse(BaseModel):
 
 class TripWithAttractionsResponse(TripResponse):
     """Extended Trip response that nests its associated attractions using the lightweight schema."""
-    attractions: List[AttractionLightResponse] = [] # Updated to use the correct unique name 🌟
+    attractions: List[AttractionLightResponse] = [] # Updated to use the correct unique name 
     model_config = ConfigDict(from_attributes=True)
 
 class AttractionCreate(BaseModel):
@@ -69,7 +69,7 @@ class AttractionCreate(BaseModel):
     default_price: Optional[float] = 0.0
     latitude: Optional[float] = Field(None, description="Geographic latitude coordinate")
     longitude: Optional[float] = Field(None, description="Geographic longitude coordinate")
-
+    
 class AttractionResponse(BaseModel):
     id: int
     name: str
@@ -78,7 +78,7 @@ class AttractionResponse(BaseModel):
     longitude: Optional[float] = None
     rating: Optional[float] = None
     category_id: Optional[int] = None 
-
+    default_price: Optional[float] = 0.0
     class Config:
         from_attributes = True
 

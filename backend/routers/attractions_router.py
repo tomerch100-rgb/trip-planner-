@@ -50,10 +50,10 @@ def get_attractions(
     return crud.get_filtered_attractions(db, city_id, category_id, max_price)
 
 
-@router.get("/explore-live", response_model=list[schemas.AttractionResponse])  # - וידוא שהמודל מצפה לרשימה שטוחה
+@router.get("/explore-live", response_model=list[schemas.AttractionResponse])  # - Ensuring the model expects a flat list
 def explore_live_attractions(
     city_id: int,
-    categories: Optional[str] = Query(None),  # - שם הפרמטר המעודכן
+    categories: Optional[str] = Query(None),  # - Updated parameter name
     db: Session = Depends(get_db),
     user_id: int = Depends(security.get_current_user_id)
 ):
@@ -62,7 +62,7 @@ def explore_live_attractions(
     Checks the local cache first, and falls back to live API fetching if necessary.
     """
     
-    #  תיקון השגיאה: שינוי מ-category_name ל-categories
+    # Bug fix: change from category_name to categories
     if categories is not None and categories.strip() == "":
         categories = None
 
@@ -70,12 +70,12 @@ def explore_live_attractions(
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
 
-    #  שינוי ל-categories בשליפה מהמטמון
+    # Change to categories when retrieving from cache
     cached_attractions = crud.get_cached_attractions(db, city_id, categories)
 
     # Strict Cache Rule: Only return cached data if it contains valid coordinates (latitude).
     if cached_attractions and cached_attractions[0].latitude is not None:
-        # התיקון: מחזירים רשימה שטוחה גם מה-Cache כדי שלא יתרסק ב-React או ב-Validation
+        # Fix: Return a flat list even from the Cache to prevent crashes in React or Validation
         return cached_attractions
 
     # Cache miss or incomplete data: Fetch fresh data from Google Places API.
@@ -85,7 +85,7 @@ def explore_live_attractions(
     # Persist the newly fetched Google data into the local PostgreSQL database
     saved_attractions = crud.save_google_results_to_db(db, google_results, city_id)
     
-    # מחזירים רשימה נטו, שזה בדיוק מה שה-response_model וה-Frontend מצפים לו
+    # Returning a clean list, which is exactly what the response_model and Frontend expect
     return saved_attractions
 
 
@@ -130,13 +130,14 @@ def recommended_attractions(
         
     recommended_places = crud.get_attraction_suggest(db, user_id, top_category_id)
     return recommended_places
+
 @router.post("/save-google-results")
 def save_results(city_id: int, results: list, db: Session = Depends(get_db)):
-    # דיבאג: מה באמת קיבלנו?
+    # Debug: what did we actually receive?
     if results and len(results) > 0:
-        print(f"DEBUG: המקום הראשון שקיבלתי הוא: {results[0].keys()}") 
-        # נבדוק אם יש בכלל שדה שנקרא 'categories' או 'types'
-        print(f"DEBUG: הדגימה הראשונה: {results[0]}")
+        print(f"DEBUG: The first item keys received are: {results[0].keys()}") 
+        # Check if there is a field named 'categories' or 'types'
+        print(f"DEBUG: First sample item: {results[0]}")
     
     saved_attractions = crud.save_google_results_to_db(db, results, city_id)
-    return {"message": "בוצע", "count": len(saved_attractions)}
+    return {"message": "Success", "count": len(saved_attractions)}
