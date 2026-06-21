@@ -87,6 +87,7 @@ class AttractionResponse(BaseModel):
     rating: Optional[float] = None
     category_id: Optional[int] = None 
     default_price: Optional[float] = 0.0
+    country_code: Optional[str] = None
     class Config:
         from_attributes = True
 

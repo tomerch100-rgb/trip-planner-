@@ -182,7 +182,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
                   style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box', marginBottom: '10px' }}
                   value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
                 />
-                <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '5px' }}>Budget: Up to {maxPrice} ₪</label>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '5px' }}>Budget: Up to {maxPrice} $</label>
                 <input
                   type="range" min="0" max="1500" step="50" style={{ width: '100%' }}
                   value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
@@ -204,7 +204,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
                     }}
                   >
                     <div style={{ fontWeight: 'bold', color: '#333', fontSize: '14px' }}>{attr.name}</div>
-                    <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>{attr.default_price ? `${attr.default_price} ₪` : 'Free'}</div>
+                    <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>{attr.default_price ? `${attr.default_price} $` : 'Free'}</div>
                   </div>
                 ))}
               </div>

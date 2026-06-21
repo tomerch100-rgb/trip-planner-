@@ -9,6 +9,8 @@ from backend.classes.models import Attraction, AttractionCategory, City
 from backend.classes.schemas import AttractionResponse, CategoryResponse
 # External API Services
 from backend.services.google_places import fetch_attractions_from_google
+import requests
+import os
 # Router configuration with Swagger UI grouping
 router = APIRouter(
     tags=["Attractions"]
@@ -50,6 +52,21 @@ def get_attractions(
     return crud.get_filtered_attractions(db, city_id, category_id, max_price)
 
 
+
+def get_country_code_from_google(location_name: str, api_key: str) -> str:
+    url = f"https://maps.googleapis.com/maps/api/geocode/json?address={location_name}&key={api_key}"
+    response = requests.get(url).json()
+    
+    if response.get("status") == "OK":
+        results = response["results"][0]
+        for component in results.get("address_components", []):
+            if "country" in component.get("types", []):
+                return component["short_name"]  # Will return "IT", "IL", "US", etc.
+                
+    return "US" # Fallback
+
+
+
 @router.get("/explore-live", response_model=list[schemas.AttractionResponse])  # - Ensuring the model expects a flat list
 def explore_live_attractions(
     city_id: int,
@@ -70,11 +87,19 @@ def explore_live_attractions(
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
 
+    # 1. שליפת קוד המדינה מגוגל לפי שם העיר (שמור את המפתח שלך ב-Environment Variables)
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "YOUR_API_KEY_HERE")
+    country_code = get_country_code_from_google(city.name, GOOGLE_API_KEY)
+
     # Change to categories when retrieving from cache
     cached_attractions = crud.get_cached_attractions(db, city_id, categories)
 
     # Strict Cache Rule: Only return cached data if it contains valid coordinates (latitude).
     if cached_attractions and cached_attractions[0].latitude is not None:
+        # 2. הזרקת קוד המדינה לתוך תוצאות ה-Cache לפני שהן חוזרות ל-React
+        for attr in cached_attractions:
+            attr.country_code = country_code
+            
         # Fix: Return a flat list even from the Cache to prevent crashes in React or Validation
         return cached_attractions
 
@@ -85,6 +110,10 @@ def explore_live_attractions(
     # Persist the newly fetched Google data into the local PostgreSQL database
     saved_attractions = crud.save_google_results_to_db(db, google_results, city_id)
     
+    # 3. הזרקת קוד המדינה לתוצאות החדשות שחזרו מגוגל
+    for attr in saved_attractions:
+        attr.country_code = country_code
+        
     # Returning a clean list, which is exactly what the response_model and Frontend expect
     return saved_attractions
 
@@ -130,6 +159,7 @@ def recommended_attractions(
         
     recommended_places = crud.get_attraction_suggest(db, user_id, top_category_id)
     return recommended_places
+
 
 @router.post("/save-google-results")
 def save_results(city_id: int, results: list, db: Session = Depends(get_db)):

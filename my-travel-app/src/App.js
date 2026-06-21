@@ -22,6 +22,24 @@ function App() {
   const [selectedCityName, setSelectedCityName] = useState('');
   const [myTripAttractions, setMyTripAttractions] = useState([]); 
   const [createdTripId, setCreatedTripId] = useState(null); 
+  
+  // Currency Localization States
+  const [selectedCountryCode, setSelectedCountryCode] = useState('US');
+  const [exchangeRates, setExchangeRates] = useState(null); // Added exchange rates state
+  
+  // Fetch Live Global Financial Exchanges on Application Mount
+  useEffect(() => {
+    const fetchRates = async () => {
+      try {
+        const response = await fetch('https://open.er-api.com/v6/latest/USD');
+        const data = await response.json();
+        setExchangeRates(data.rates);
+      } catch (error) {
+        console.error("Failed to fetch international currency rates:", error);
+      }
+    };
+    fetchRates();
+  }, []);
 
   useEffect(() => {
     if (currentStep === 'attractions' && user) {
@@ -39,9 +57,10 @@ function App() {
     }
   }, [currentStep, user]);
 
-  const handleSearchResults = (attractionsData, cityName) => {
+  const handleSearchResults = (attractionsData, cityName, countryCode = 'US') => {
     setLiveAttractions(attractionsData || []);
     setSelectedCityName(cityName);
+    setSelectedCountryCode(countryCode); // Save the extracted code
     setCurrentStep('attractions'); 
   };
 
@@ -134,6 +153,8 @@ function App() {
                 <AttractionsList 
                   attractions={liveAttractions} 
                   onAddToTrip={handleAddToTrip} 
+                  countryCode={selectedCountryCode} 
+                  liveRates={exchangeRates} // Passed down dynamically to ensure accurate math!
                 />
               </div>
 

@@ -52,7 +52,7 @@ export default function RecommendationsPanel({ recommendations, onAddToTrip }) {
 
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <span style={{ backgroundColor: '#fef3c7', color: '#78350f', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
-                {attr.default_price ? `${attr.default_price} ₪` : 'Free'}
+                {attr.default_price ? `${attr.default_price} $` : 'Free'}
               </span>
               {attr.rating > 0 && (
                 <span style={{ backgroundColor: '#f3f4f6', color: '#4b5563', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>

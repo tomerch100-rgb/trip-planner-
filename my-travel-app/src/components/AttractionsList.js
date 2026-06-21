@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { attractionsAPI } from '../services/api';
+// 1. Swapped to the new math-converting function
+import { convertAndFormatPrice } from '../components/currencyFormatter'; 
 
-const AttractionsList = ({ attractions: initialAttractions, onAddToTrip }) => {
+// 2. Added liveRates to the accepted props
+const AttractionsList = ({ attractions: initialAttractions, onAddToTrip, countryCode = 'US', liveRates }) => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
@@ -68,7 +71,8 @@ const AttractionsList = ({ attractions: initialAttractions, onAddToTrip }) => {
         {/* Price Filter Slider */}
         <div className="flex-1 w-full">
           <label className="block text-sm font-bold text-gray-700 mb-2">
-            Max Price: <span className="text-blue-600">{maxPrice ? `Up to ${maxPrice} ₪` : 'Unlimited'}</span>
+            {/* 3. Applied the new math conversion to the max price label */}
+            Max Price: <span className="text-blue-600">{maxPrice ? `Up to ${convertAndFormatPrice(maxPrice, countryCode, liveRates)}` : 'Unlimited'}</span>
           </label>
           <input
             type="range"
@@ -115,8 +119,9 @@ const AttractionsList = ({ attractions: initialAttractions, onAddToTrip }) => {
                 </div>
                 
                 <div className="flex gap-2 mb-3">
+                  {/* 4. Applied the new math conversion to the individual attraction cards */}
                   <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded-md border border-blue-100">
-                    {attraction.default_price ? `${attraction.default_price} ₪` : 'Free'}
+                    {attraction.default_price ? convertAndFormatPrice(attraction.default_price, countryCode, liveRates) : 'Free'}
                   </span>
                   <span className="bg-amber-50/80 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-amber-100/50 flex items-center gap-1">
                     ⭐ {attraction.rating || 'N/A'}
