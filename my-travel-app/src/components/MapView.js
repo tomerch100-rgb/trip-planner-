@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
-// תיקון טעינת הניעוצים (הסיכות הכחולות) בריאקט
+// Fix missing marker icons in React
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.71.1/images/marker-icon-2x.png',
@@ -10,7 +10,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.71.1/images/marker-shadow.png',
 });
 
-// קומפוננטת עזר פנימית שמזיזה וממרכזת את המפה אוטומטית לפי הסיכות שנוספו
+// Helper component that recenters the map based on markers
 const RecenterMap = ({ positions }) => {
   const map = useMap();
   useEffect(() => {
@@ -26,58 +26,71 @@ const RecenterMap = ({ positions }) => {
 };
 
 export default function MapView({ attractions = [] }) {
-  // סינון אטרקציות שיש להן מיקום תקין והמרה למספרים עשרוניים
-  const validAttractions = attractions.filter(
-    attr => attr && attr.latitude && attr.longitude
-  );
+  // Filter out attractions that don't have valid coordinates
+  const validAttractions = attractions.filter(attr => {
+    const lat = attr.latitude || attr.attraction?.latitude;
+    const lon = attr.longitude || attr.attraction?.longitude;
+    return lat != null && lon != null;
+  });
 
-  const validPositions = validAttractions.map(attr => [
-    parseFloat(attr.latitude),
-    parseFloat(attr.longitude),
+  const positions = validAttractions.map(attr => [
+    attr.latitude || attr.attraction?.latitude,
+    attr.longitude || attr.attraction?.longitude
   ]);
 
-  // נקודת ברירת מחדל אם המערך ריק
-  const defaultCenter = [36.4751, 2.8276];
-  const mapCenter = validPositions.length > 0 ? validPositions[0] : defaultCenter;
+  if (positions.length === 0) {
+    return (
+      <div className="bg-gray-100 flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 h-64 text-gray-500 font-bold">
+        No locations available to show on map.
+      </div>
+    );
+  }
+
+  // Default center in case we have no positions (fallback)
+  const defaultCenter = [51.505, -0.09]; 
 
   return (
-    // הסטייל כאן מכריח את המפה לקבל גובה של 400 פיקסלים ולא להישאר מכווצת
-    <div style={{ height: "400px", width: "100%", position: "relative" }} className="rounded-xl overflow-hidden shadow-md border border-gray-200 z-0">
-      <MapContainer
-        center={mapCenter}
-        zoom={12}
-        style={{ height: "100%", width: "100%" }}
-        scrollWheelZoom={true}
+    <div className="h-96 w-full rounded-xl overflow-hidden shadow-md border border-gray-200">
+      <MapContainer 
+        center={positions.length > 0 ? positions[0] : defaultCenter} 
+        zoom={13} 
+        style={{ height: '100%', width: '100%', zIndex: 1 }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
+        
+        {/* Recenter whenever the pins change */}
+        <RecenterMap positions={positions} />
 
-        {/* הזזה אוטומטית של הפוקוס */}
-        <RecenterMap positions={validPositions} />
-
-        {/* קו מסלול שמחבר בין האטרקציות בלו"ז */}
-        {validPositions.length > 1 && (
-          <Polyline
-            positions={validPositions}
-            pathOptions={{ color: '#2563eb', weight: 4, dashArray: '5, 10' }}
+        {/* Connecting line between the pins */}
+        {positions.length > 1 && (
+          <Polyline 
+            positions={positions} 
+            color="red" 
+            dashArray="10, 10" 
+            weight={3} 
+            opacity={0.7} 
           />
         )}
 
-        {/* יצירת הסיכות (Markers) על המפה */}
-        {validAttractions.map((attr, idx) => (
-          <Marker
-            key={attr.id || idx}
-            position={[parseFloat(attr.latitude), parseFloat(attr.longitude)]}
+        {/* The pins themselves */}
+        {validAttractions.map((attr, index) => (
+          <Marker 
+            key={index} 
+            position={[
+              attr.latitude || attr.attraction?.latitude || 0, 
+              attr.longitude || attr.attraction?.longitude || 0
+            ]}
           >
             <Popup>
-              <div className="text-right font-sans p-1" dir="rtl">
-                <h5 className="font-bold text-gray-900 text-sm mb-0.5">{attr.name}</h5>
-                <p className="text-gray-500 text-xs my-0">{attr.address || 'אין כתובת זמינה'}</p>
+              <div className="text-left" dir="ltr">
+                <strong className="block text-sm mb-1">{attr.name || attr.attraction?.name}</strong>
+                <p className="text-gray-500 text-xs my-0">{attr.address || 'Address unavailable'}</p>
                 {attr.day_number && (
                   <span className="inline-block bg-blue-100 text-blue-800 text-[10px] font-bold px-1.5 py-0.5 rounded mt-1">
-                    יום {attr.day_number} - {attr.start_time}
+                    Day {attr.day_number} - {attr.start_time}
                   </span>
                 )}
               </div>

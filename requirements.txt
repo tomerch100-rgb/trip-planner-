@@ -32,7 +32,8 @@ urllib3==2.7.0
 uvicorn==0.49.0
 
 #order for install all the libaries
-#pip install -r requirements.txt 
+#python3 -m pip install -r requirements.txt 
 
 #for update every time you install libary
 # pip freeze > requirements.txt
+

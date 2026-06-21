@@ -11,7 +11,7 @@ class CityLightResponse(BaseModel):
     name: str
     country: Optional[CountryLightResponse] = None
     model_config = ConfigDict(from_attributes=True)
-    
+
 class UserCreate(BaseModel):
     """Payload for registering a new user."""
     email: EmailStr
@@ -159,11 +159,3 @@ class ExploreLiveResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-class CountryLightResponse(BaseModel):
-    name: str
-    model_config = ConfigDict(from_attributes=True)
-
-class CityLightResponse(BaseModel):
-    name: str
-    country: Optional[CountryLightResponse] = None
-    model_config = ConfigDict(from_attributes=True)

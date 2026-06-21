@@ -32,11 +32,11 @@ export default function LoginForm({ onSwitchToRegister }) {
         
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <div className="mx-auto w-12 h-12 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-md shadow-cyan-100">
-            <Compass className="w-6 h-6" />
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/30 mb-6">
+            <Compass className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900">Welcome to Triper</h1>
-          <p className="text-sm text-slate-400 font-medium">Log in to start planning your luxury custom escape</p>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">Welcome to Triper</h1>
+          <p className="text-sm text-slate-500 font-medium">Log in to start planning your luxury custom escape</p>
         </div>
 
         {/* Error Notification */}
@@ -48,15 +48,15 @@ export default function LoginForm({ onSwitchToRegister }) {
         )}
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase mb-2 tracking-wide">Username</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-2 tracking-wide ml-1">Username</label>
             <div className="relative">
-              <User className="absolute left-4 top-3.5 w-4 h-4 text-slate-300" />
+              <User className="absolute left-4 top-4 w-5 h-5 text-slate-400" />
               <input 
                 type="text"
                 placeholder="Enter your username"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm font-medium focus:outline-none focus:border-cyan-500 transition-colors"
+                className="w-full bg-slate-50 hover:bg-white border-2 border-slate-100 rounded-xl pl-12 pr-4 py-3.5 text-sm font-medium focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-slate-700"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -65,13 +65,13 @@ export default function LoginForm({ onSwitchToRegister }) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase mb-2 tracking-wide">Password</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-2 tracking-wide ml-1">Password</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-3.5 w-4 h-4 text-slate-300" />
+              <Lock className="absolute left-4 top-4 w-5 h-5 text-slate-400" />
               <input 
                 type="password"
                 placeholder="••••••••"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm font-medium focus:outline-none focus:border-cyan-500 transition-colors"
+                className="w-full bg-slate-50 hover:bg-white border-2 border-slate-100 rounded-xl pl-12 pr-4 py-3.5 text-sm font-medium focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-slate-700"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -82,9 +82,9 @@ export default function LoginForm({ onSwitchToRegister }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl py-3.5 text-sm font-bold shadow-md shadow-cyan-100 hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl py-4 text-sm font-bold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:shadow-none disabled:transform-none mt-2"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign In to Your Workspace"}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In to Your Workspace"}
           </button>
         </form>
 
