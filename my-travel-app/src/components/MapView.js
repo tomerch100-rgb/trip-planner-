@@ -53,7 +53,7 @@ export default function MapView({ attractions = [] }) {
     // Style configurations enforce 400px container height definitions to prevent canvas collapse issues
     <div style={{ height: "400px", width: "100%", position: "relative" }} className="rounded-xl overflow-hidden shadow-md border border-gray-200 z-0">
       <MapContainer
-        center={mapCenter}
+        center={defaultCenter}
         zoom={12}
         style={{ height: "100%", width: "100%" }}
         scrollWheelZoom={true}
@@ -64,36 +64,39 @@ export default function MapView({ attractions = [] }) {
         />
 
         {/* Automatic viewport tracking execution */}
-        <RecenterMap positions={validPositions} />
+        <RecenterMap positions={positions} />
 
         {/* Dynamic routing line path rendering to connect itinerary stop slots */}
-        {validPositions.length > 1 && (
+        {positions.length > 1 && (
           <Polyline
-            positions={validPositions}
+            positions={positions}
             pathOptions={{ color: '#2563eb', weight: 4, dashArray: '5, 10' }}
           />
         )}
 
         {/* Rendering interactive landmark pinpoint markers */}
-        {validAttractions.map((attr, idx) => (
+        {validAttractions.map((attr, idx) => {
+          const lat = parseFloat(attr.latitude || attr.attraction?.latitude);
+          const lon = parseFloat(attr.longitude || attr.attraction?.longitude);
+          return (
           <Marker
             key={attr.id || idx}
-            position={[parseFloat(attr.latitude), parseFloat(attr.longitude)]}
+            position={[lat, lon]}
           >
             <Popup>
               <div className="text-left font-sans p-1" dir="ltr">
-                <h5 className="font-bold text-gray-900 text-sm mb-0.5">{attr.name}</h5>
-                <p className="text-gray-500 text-xs my-0">{attr.address || 'Address not available'}</p>
+                <h5 className="font-bold text-gray-900 text-sm mb-0.5">{attr.name || attr.attraction?.name}</h5>
+                <p className="text-gray-500 text-xs my-0">{attr.address || attr.attraction?.address || 'Address not available'}</p>
                 {attr.day_number && (
                   <span className="inline-block bg-blue-100 text-blue-800 text-[10px] font-bold px-1.5 py-0.5 rounded mt-1">
-                    Day {attr.day_number} - {attr.start_time}
                     Day {attr.day_number} - {attr.start_time}
                   </span>
                 )}
               </div>
             </Popup>
           </Marker>
-        ))}
+        );
+        })}
       </MapContainer>
     </div>
   );
