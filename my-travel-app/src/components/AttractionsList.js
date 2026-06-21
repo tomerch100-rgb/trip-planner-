@@ -51,7 +51,6 @@ const AttractionsList = ({ attractions: initialAttractions, onAddToTrip }) => {
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col md:flex-row md:items-end gap-6 text-left">
         
         {/* Category Filter */}
-        {/* Category Filter */}
         <div className="flex-1 w-full">
           <label className="block text-sm font-bold text-slate-700 mb-2">Category:</label>
           <select
@@ -59,7 +58,6 @@ const AttractionsList = ({ attractions: initialAttractions, onAddToTrip }) => {
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="w-full p-3 border-2 border-slate-100 rounded-xl text-sm font-medium bg-slate-50 hover:bg-white focus:bg-white outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-slate-700 appearance-none"
           >
-            <option value="">All Categories</option>
             <option value="">All Categories</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -90,13 +88,11 @@ const AttractionsList = ({ attractions: initialAttractions, onAddToTrip }) => {
             className="flex-1 md:w-32 bg-slate-800 hover:bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-md hover:shadow-lg active:scale-95"
           >
             Filter
-            Filter
           </button>
           <button 
             onClick={handleResetFilter} 
             className="flex-1 md:w-32 bg-white hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-xl font-bold text-sm transition-all border-2 border-slate-200 hover:border-slate-300 active:scale-95"
           >
-            Reset
             Reset
           </button>
         </div>

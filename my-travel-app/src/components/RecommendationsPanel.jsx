@@ -5,7 +5,7 @@ export default function RecommendationsPanel({ recommendations, onAddToTrip }) {
   if (!recommendations || recommendations.length === 0) return null;
 
   return (
-    <div 
+    <div
       style={{
         background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
         border: '2px solid #fbbf24',
@@ -17,30 +17,26 @@ export default function RecommendationsPanel({ recommendations, onAddToTrip }) {
         width: '100%',
         boxSizing: 'border-box',
         textAlign: 'left'
-        textAlign: 'left'
-      }} 
+      }}
       dir="ltr"
-      dir="ltr"
+
     >
-      
+
       {/* Golden Header */}
       <div style={{ marginBottom: '15px', borderBottom: '1px solid #fde68a', paddingBottom: '10px' }}>
         <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#78350f', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span>🌟</span> Recommended for you
-          <span>🌟</span> Recommended for you
         </h3>
         <p style={{ fontSize: '12px', color: '#92400e', marginTop: '4px', fontWeight: '500', margin: '4px 0 0 0' }}>
-          Based on your previous trips
           Based on your previous trips
         </p>
       </div>
 
       {/* Recommended Attractions List */}
-      {/* Recommended Attractions List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {recommendations.map(attr => (
-          <div 
-            key={attr.id} 
+          <div
+            key={attr.id}
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.9)',
               border: '1px solid #fde68a',
@@ -53,7 +49,7 @@ export default function RecommendationsPanel({ recommendations, onAddToTrip }) {
             <h4 style={{ fontWeight: 'bold', color: '#1f2937', fontSize: '14px', margin: '0 0 8px 0' }}>
               {attr.name}
             </h4>
-            
+
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <span style={{ backgroundColor: '#fef3c7', color: '#78350f', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
                 {attr.default_price ? `${attr.default_price} ₪` : 'Free'}
@@ -84,9 +80,8 @@ export default function RecommendationsPanel({ recommendations, onAddToTrip }) {
               onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
             >
               + Add to Trip
-              + Add to Trip
             </button>
-            
+
           </div>
         ))}
       </div>

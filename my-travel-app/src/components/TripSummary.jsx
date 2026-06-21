@@ -2,16 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { tripsAPI } from '../services/api';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
+import MapView from './MapView';
 import 'leaflet/dist/leaflet.css';
+import { Map, MapPin } from 'lucide-react';
 
 // Set up a custom red marker pin for the map instead of the default blue one
 const redIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
 });
 
 const TripSummary = ({ tripId }) => {
@@ -43,8 +45,8 @@ const TripSummary = ({ tripId }) => {
     );
 
     // Calculate map central positioning anchor (uses first attraction location, defaults to Paris if empty)
-    const mapCenter = validLocations.length > 0 
-        ? [validLocations[0].attraction.latitude, validLocations[0].attraction.longitude] 
+    const mapCenter = validLocations.length > 0
+        ? [validLocations[0].attraction.latitude, validLocations[0].attraction.longitude]
         : [48.8566, 2.3522]; // Paris default fallback positioning parameters
 
     // Group dates uniquely and sort chronologically
@@ -60,25 +62,25 @@ const TripSummary = ({ tripId }) => {
 
     return (
         <div className="p-8 max-w-5xl mx-auto bg-white/50 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white" dir="ltr">
-            
+
             <div className="mb-12 text-center">
                 <div className="inline-block p-4 bg-gradient-to-br from-fuchsia-500 to-rose-600 rounded-3xl text-white mb-6 shadow-lg shadow-fuchsia-500/30">
                     <Map size={48} strokeWidth={2} />
                 </div>
                 <h1 className="text-4xl font-black text-slate-800 tracking-tight">
-                   My Itinerary Summary 
-                   {tripDetails?.city && (
-                       <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-600 to-purple-600">
-                           in {tripDetails.city.name}, {tripDetails.city.country?.name}
-                       </span>
-                   )}
+                    My Itinerary Summary
+                    {tripDetails?.city && (
+                        <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-600 to-purple-600">
+                            in {tripDetails.city.name}, {tripDetails.city.country?.name}
+                        </span>
+                    )}
                 </h1>
             </div>
-            
+
             {/* 🗺️ Interactive routing layer map wrapper */}
             <div className="mb-10 h-[400px] w-full rounded-2xl overflow-hidden shadow-lg border-4 border-white relative z-0">
-                <MapContainer 
-                    center={mapCenter} 
+                <MapContainer
+                    center={mapCenter}
                     zoom={validLocations.length > 0 ? 13 : 3} // Zoom outwards to a broad viewpoint if positions are empty
                     style={{ height: '100%', width: '100%' }}
                     scrollWheelZoom={false}
@@ -87,19 +89,19 @@ const TripSummary = ({ tripId }) => {
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
-                    
+
                     {/* Render target pinpoint markers on map canvas grids */}
                     {validLocations.map(item => (
-                        <Marker 
-                            key={item.id} 
+                        <Marker
+                            key={item.id}
                             position={[item.attraction.latitude, item.attraction.longitude]}
                             icon={redIcon}
                         >
                             <Popup>
                                 <div className="text-center">
-                                    <strong className="text-blue-600">{item.attraction.name}</strong><br/>
+                                    <strong className="text-blue-600">{item.attraction.name}</strong><br />
                                     <span className="text-xs text-gray-500">
-                                        {item.visit_date} | {item.start_time ? item.start_time.substring(0,5) : ''}
+                                        {item.visit_date} | {item.start_time ? item.start_time.substring(0, 5) : ''}
                                     </span>
                                 </div>
                             </Popup>
@@ -119,12 +121,12 @@ const TripSummary = ({ tripId }) => {
                     {dates.map((date, index) => (
                         <div key={date} className="bg-white p-6 rounded-3xl shadow-lg shadow-slate-100/50 border border-slate-100 overflow-hidden relative">
                             <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-fuchsia-400 to-purple-500"></div>
-                            
+
                             <h2 className="text-2xl font-black text-slate-800 mb-6 pl-4 flex items-center gap-3">
                                 <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-xl text-sm border border-purple-200 shadow-sm">Day {index + 1}</span>
                                 {date}
                             </h2>
-                            
+
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
@@ -144,10 +146,10 @@ const TripSummary = ({ tripId }) => {
                                                         {item.attraction?.name || `Attraction ${item.attraction_id}`}
                                                     </td>
                                                     <td className="p-4 text-slate-600 font-mono font-medium">
-                                                        {item.start_time ? item.start_time.substring(0,5) : '-'}
+                                                        {item.start_time ? item.start_time.substring(0, 5) : '-'}
                                                     </td>
                                                     <td className="p-4 text-slate-600 font-mono font-medium">
-                                                        {item.end_time ? item.end_time.substring(0,5) : '-'}
+                                                        {item.end_time ? item.end_time.substring(0, 5) : '-'}
                                                     </td>
                                                 </tr>
                                             ))}

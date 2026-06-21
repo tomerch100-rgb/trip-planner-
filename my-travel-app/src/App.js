@@ -81,15 +81,12 @@ function App() {
           Triper
         </h1>
         <div className="flex gap-6 items-center">
-          {currentStep !== 'home' && (
-            <button 
-              onClick={() => setCurrentStep('home')} 
-              className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-200"
-            >
-              <Home size={18} /> Home
-              <Home size={18} /> Home
-            </button>
-          )}
+          <button 
+            onClick={() => setCurrentStep('home')} 
+            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-200"
+          >
+            <Home size={18} /> Home
+          </button>
           <button onClick={handleLogout} className="text-sm font-bold text-red-500 hover:text-white hover:bg-red-500 px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-red-500/20">
             Logout
           </button>
