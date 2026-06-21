@@ -16,7 +16,7 @@ import { Home } from 'lucide-react';
 function App() {
   const { user, logout } = useContext(AuthContext); 
   const [authMode, setAuthMode] = useState('login');
-  const [currentStep, setCurrentStep] = useState('home'); // Starting at home step layout
+  const [currentStep, setCurrentStep] = useState('home'); 
   const [liveAttractions, setLiveAttractions] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [selectedCityName, setSelectedCityName] = useState('');
@@ -70,12 +70,12 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-blue-100 selection:text-blue-900">
       
       {/* Top Header Navigation Panel */}
       <header className="bg-white p-4 shadow flex justify-between items-center px-8">
         <h1 
-          className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 cursor-pointer"
+          className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 cursor-pointer hover:opacity-90 transition-opacity"
           onClick={() => setCurrentStep('home')}
         >
           Triper
@@ -84,18 +84,19 @@ function App() {
           {currentStep !== 'home' && (
             <button 
               onClick={() => setCurrentStep('home')} 
-              className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-600 transition"
+              className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-200"
             >
+              <Home size={18} /> Home
               <Home size={18} /> Home
             </button>
           )}
-          <button onClick={handleLogout} className="text-sm font-bold text-red-500 hover:text-red-700 transition">
+          <button onClick={handleLogout} className="text-sm font-bold text-red-500 hover:text-white hover:bg-red-500 px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-red-500/20">
             Logout
           </button>
         </div>
       </header>
 
-      <main className="p-8 max-w-full mx-auto" style={{ position: 'relative' }}>
+      <main className="p-8 max-w-7xl mx-auto w-full" style={{ position: 'relative' }}>
         
         {/* Step 0: Dashboard Home Layout */}
         {currentStep === 'home' && (
@@ -157,11 +158,11 @@ function App() {
                   bottom: '32px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  backgroundColor: '#16a34a',
+                  backgroundColor: '#c026d3', // fuchsia-600 to match vibrant theme
                   color: '#fff',
                   padding: '16px 36px',
                   borderRadius: '9999px',
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                  boxShadow: '0 20px 40px rgba(192, 38, 211, 0.3)',
                   border: '4px solid #fff',
                   cursor: 'pointer',
                   fontWeight: '900',

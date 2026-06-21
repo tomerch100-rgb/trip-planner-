@@ -26,19 +26,28 @@ const RecenterMap = ({ positions }) => {
 };
 
 export default function MapView({ attractions = [] }) {
-  // Filter attractions with valid coordinates and parse values into floats
-  const validAttractions = attractions.filter(
-    attr => attr && attr.latitude && attr.longitude
-  );
+  // Filter out attractions that don't have valid coordinates
+  const validAttractions = attractions.filter(attr => {
+    const lat = attr.latitude || attr.attraction?.latitude;
+    const lon = attr.longitude || attr.attraction?.longitude;
+    return lat != null && lon != null;
+  });
 
-  const validPositions = validAttractions.map(attr => [
-    parseFloat(attr.latitude),
-    parseFloat(attr.longitude),
+  const positions = validAttractions.map(attr => [
+    attr.latitude || attr.attraction?.latitude,
+    attr.longitude || attr.attraction?.longitude
   ]);
 
-  // Default coordinate center anchor if the array is empty
-  const defaultCenter = [36.4751, 2.8276];
-  const mapCenter = validPositions.length > 0 ? validPositions[0] : defaultCenter;
+  if (positions.length === 0) {
+    return (
+      <div className="bg-gray-100 flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 h-64 text-gray-500 font-bold">
+        No locations available to show on map.
+      </div>
+    );
+  }
+
+  // Default center in case we have no positions (fallback)
+  const defaultCenter = [51.505, -0.09]; 
 
   return (
     // Style configurations enforce 400px container height definitions to prevent canvas collapse issues
@@ -50,8 +59,8 @@ export default function MapView({ attractions = [] }) {
         scrollWheelZoom={true}
       >
         <TileLayer
-          attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
 
         {/* Automatic viewport tracking execution */}
@@ -77,6 +86,7 @@ export default function MapView({ attractions = [] }) {
                 <p className="text-gray-500 text-xs my-0">{attr.address || 'Address not available'}</p>
                 {attr.day_number && (
                   <span className="inline-block bg-blue-100 text-blue-800 text-[10px] font-bold px-1.5 py-0.5 rounded mt-1">
+                    Day {attr.day_number} - {attr.start_time}
                     Day {attr.day_number} - {attr.start_time}
                   </span>
                 )}

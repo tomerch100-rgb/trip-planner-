@@ -16,6 +16,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
 
   // ==========================================
   // Date Logic
+  // Date Logic
   // ==========================================
   const handleStartPlanning = (e) => {
     e.preventDefault();
@@ -26,8 +27,10 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
     const diff = Math.ceil((end - start) / (1000 * 3600 * 24)) + 1;
 
     if (diff <= 0) return alert("End date must be after the start date!");
+    if (diff <= 0) return alert("End date must be after the start date!");
 
     setTripDetails({
+      destination: destinationName || 'Selected Destination',
       destination: destinationName || 'Selected Destination',
       startDate,
       endDate,
@@ -36,6 +39,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
   };
 
   const tripDates = [];
+  const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   
   if (tripDetails) {
@@ -152,6 +156,9 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
       <div style={{ maxWidth: '400px', margin: '50px auto', padding: '30px', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '12px', textAlign: 'left' }} dir="ltr">
         <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px', textAlign: 'center' }}>Time Settings</h2>
         <p style={{ color: '#666', marginBottom: '25px', textAlign: 'center' }}>When is your trip to {destinationName}?</p>
+      <div style={{ maxWidth: '400px', margin: '50px auto', padding: '30px', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '12px', textAlign: 'left' }} dir="ltr">
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px', textAlign: 'center' }}>Time Settings</h2>
+        <p style={{ color: '#666', marginBottom: '25px', textAlign: 'center' }}>When is your trip to {destinationName}?</p>
         <form onSubmit={handleStartPlanning}>
           <div style={{ marginBottom: '15px' }}>
             <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Departure Date</label>
@@ -171,6 +178,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
 
   // --- Step B: Updated Schedule Board with Grid Tracking System and Dynamic Map ---
   return (
+    <div style={{ display: 'flex', flexDirection: 'row', width: '100%', minHeight: '85vh', backgroundColor: '#f8f9fa', boxSizing: 'border-box', fontFamily: 'sans-serif' }} dir="ltr">
     <div style={{ display: 'flex', flexDirection: 'row', width: '100%', minHeight: '85vh', backgroundColor: '#f8f9fa', boxSizing: 'border-box', fontFamily: 'sans-serif' }} dir="ltr">
       
       {/* Sidebar Panel: Attractions Bank */}
@@ -201,6 +209,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
                 cursor: 'pointer',
                 marginBottom: '10px',
                 textAlign: 'left'
+                textAlign: 'left'
               }}
             >
               <div style={{ fontWeight: 'bold', color: '#333', fontSize: '14px' }}>{attr.name}</div>
@@ -225,16 +234,21 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
               style={{ backgroundColor: '#333', color: '#fff', padding: '10px 24px', border: 'none', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer' }}
             >
               {isSaving ? 'Saving...' : 'Save Itinerary'}
+              {isSaving ? 'Saving...' : 'Save Itinerary'}
             </button>
           </div>
 
           {/* Table Implementation Architecture with Strict Sizing Definitions */}
           <div style={{ backgroundColor: '#fff', border: '2px solid #999', borderRadius: '8px', overflow: 'hidden', marginBottom: '30px' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', textAlign: 'left' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', textAlign: 'left' }}>
               <thead>
                 <tr style={{ backgroundColor: '#f2dbb8', borderBottom: '2px solid #888' }}>
                   <th style={{ width: '90px', borderRight: '1px solid #aaa', padding: '12px', color: '#333', fontWeight: 'bold', fontSize: '14px', textAlign: 'center' }}>Time</th>
+                  <th style={{ width: '90px', borderRight: '1px solid #aaa', padding: '12px', color: '#333', fontWeight: 'bold', fontSize: '14px', textAlign: 'center' }}>Time</th>
                   {tripDates.map((dateObj) => (
+                    <th key={dateObj.fullDate} style={{ borderRight: '1px solid #aaa', padding: '12px', color: '#222', fontWeight: 'bold', textAlign: 'center' }}>
+                      <div style={{ fontSize: '16px' }}>Day {dateObj.dayNumber} ({dateObj.dayName})</div>
                     <th key={dateObj.fullDate} style={{ borderRight: '1px solid #aaa', padding: '12px', color: '#222', fontWeight: 'bold', textAlign: 'center' }}>
                       <div style={{ fontSize: '16px' }}>Day {dateObj.dayNumber} ({dateObj.dayName})</div>
                       <div style={{ fontSize: '11px', fontWeight: 'normal', color: '#555', marginTop: '2px' }}>{dateObj.fullDate}</div>
@@ -262,17 +276,20 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
                         if (isStartHour) {
                           return (
                             <td key={`${dateObj.fullDate}-${hour}`} style={{ borderRight: '1px solid #aaa', padding: '4px', verticalAlign: 'top', height: '65px', boxSizing: 'border-box' }}>
+                            <td key={`${dateObj.fullDate}-${hour}`} style={{ borderRight: '1px solid #aaa', padding: '4px', verticalAlign: 'top', height: '65px', boxSizing: 'border-box' }}>
                               <div style={{ backgroundColor: '#4b5563', color: '#fff', borderRadius: '4px', padding: '8px', height: '100%', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxSizing: 'border-box', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                                 <div style={{ fontWeight: 'bold', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{scheduledItem.name}</div>
                                 <div style={{ fontSize: '10px', color: '#cbd5e1', marginTop: '2px' }}>{scheduledItem.start_time} - {scheduledItem.end_time}</div>
                                 <button 
                                   onClick={(e) => { e.stopPropagation(); handleRemoveItem(scheduledItem.id, dateObj.dayNumber, scheduledItem.start_time); }}
                                   style={{ position: 'absolute', top: '4px', right: '4px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '16px', height: '16px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+                                  style={{ position: 'absolute', top: '4px', right: '4px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '16px', height: '16px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
                                 >✕</button>
                               </div>
                             </td>
                           );
                         } else {
+                          return <td key={`${dateObj.fullDate}-${hour}`} style={{ borderRight: '1px solid #aaa', backgroundColor: '#f3f4f6', height: '65px' }}></td>;
                           return <td key={`${dateObj.fullDate}-${hour}`} style={{ borderRight: '1px solid #aaa', backgroundColor: '#f3f4f6', height: '65px' }}></td>;
                         }
                       }
@@ -282,6 +299,7 @@ export default function ItineraryPlanner({ savedAttractions = [], destinationNam
                           key={`${dateObj.fullDate}-${hour}`} 
                           onClick={() => handleAssignToSlot(dateObj.dayNumber, dateObj.fullDate, hour)}
                           style={{
+                            borderRight: '1px solid #aaa',
                             borderRight: '1px solid #aaa',
                             height: '65px',
                             cursor: 'pointer',

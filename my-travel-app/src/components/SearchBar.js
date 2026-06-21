@@ -98,15 +98,18 @@ const SearchBar = ({ onSearchResults }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 max-w-3xl mx-auto space-y-6 text-left" dir="ltr">
-      <h2 className="text-xl font-bold text-gray-800">Where are you traveling?</h2>
+    <div className="bg-white p-8 rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-100 max-w-4xl mx-auto space-y-8 text-left" dir="ltr">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-black text-slate-800">Where are you traveling?</h2>
+        <p className="text-slate-500 font-medium">Select your destination and interests to find the best attractions.</p>
+      </div>
       
       {/* Country & City inputs */}
-      <div className="flex flex-col md:flex-row gap-4 items-end">
+      <div className="flex flex-col md:flex-row gap-6 items-end">
         
         {/* Country Search Input */}
         <div className="flex-1 w-full relative">
-          <label className="block text-sm font-bold text-gray-600 mb-1">Country</label>
+          <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Country</label>
           <input 
             type="text"
             value={countrySearch}
@@ -122,23 +125,23 @@ const SearchBar = ({ onSearchResults }) => {
             onFocus={() => setShowCountryDropdown(true)}
             onBlur={() => setTimeout(() => setShowCountryDropdown(false), 200)}
             placeholder="Type a country name..."
-            className="w-full border p-2.5 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none transition"
+            className="w-full border-2 border-slate-100 p-4 rounded-xl text-base bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder:text-slate-400 font-medium text-slate-700"
           />
           {/* Country Floating Dropdown */}
           {showCountryDropdown && (
-            <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+            <ul className="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-xl shadow-2xl shadow-slate-200/50 max-h-64 overflow-y-auto py-2">
               {filteredCountries.length > 0 ? (
                 filteredCountries.map(c => (
                   <li 
                     key={c.id} 
                     onClick={() => handleSelectCountry(c.id, c.name)}
-                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 transition"
+                    className="px-5 py-3 hover:bg-blue-50 hover:text-blue-700 cursor-pointer text-sm font-bold text-slate-600 transition-colors"
                   >
                     {c.name}
                   </li>
                 ))
               ) : (
-                <li className="px-4 py-2 text-gray-400 text-sm">No countries found...</li>
+                <li className="px-5 py-3 text-slate-400 text-sm italic">No countries found...</li>
               )}
             </ul>
           )}
@@ -146,7 +149,7 @@ const SearchBar = ({ onSearchResults }) => {
 
         {/* City Search Input */}
         <div className="flex-1 w-full relative">
-          <label className="block text-sm font-bold text-gray-600 mb-1">City</label>
+          <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">City</label>
           <input 
             type="text"
             value={citySearch}
@@ -161,23 +164,23 @@ const SearchBar = ({ onSearchResults }) => {
             onBlur={() => setTimeout(() => setShowCityDropdown(false), 200)}
             placeholder={selectedCountry ? "Type a city name..." : "Select a country first"}
             disabled={!selectedCountry}
-            className="w-full border p-2.5 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full border-2 border-slate-100 p-4 rounded-xl text-base bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder:text-slate-400 font-medium text-slate-700 disabled:opacity-50 disabled:bg-slate-50 disabled:cursor-not-allowed"
           />
           {/* City Floating Dropdown */}
           {showCityDropdown && selectedCountry && (
-            <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+            <ul className="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-xl shadow-2xl shadow-slate-200/50 max-h-64 overflow-y-auto py-2">
               {filteredCities.length > 0 ? (
                 filteredCities.map(c => (
                   <li 
                     key={c.id} 
                     onClick={() => handleSelectCity(c.id, c.name)}
-                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 transition"
+                    className="px-5 py-3 hover:bg-blue-50 hover:text-blue-700 cursor-pointer text-sm font-bold text-slate-600 transition-colors"
                   >
                     {c.name}
                   </li>
                 ))
               ) : (
-                <li className="px-4 py-2 text-gray-400 text-sm">No cities found...</li>
+                <li className="px-5 py-3 text-slate-400 text-sm italic">No cities found...</li>
               )}
             </ul>
           )}
@@ -188,16 +191,16 @@ const SearchBar = ({ onSearchResults }) => {
           type="button" 
           onClick={handleLiveSearch} 
           disabled={!selectedCity || loading}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition shadow-md disabled:bg-gray-400 w-full md:w-auto h-11"
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 disabled:opacity-50 disabled:shadow-none disabled:transform-none disabled:cursor-not-allowed w-full md:w-auto h-[60px] flex items-center justify-center"
         >
           {loading ? 'Searching...' : 'Find Attractions'}
         </button>
       </div>
 
       {/* Categories Interest Section */}
-      <div className="border-t border-gray-100 pt-4">
-        <label className="block text-sm font-bold text-gray-600 mb-3">What are you interested in doing? (Select multiple)</label>
-        <div className="flex flex-wrap gap-2">
+      <div className="border-t border-slate-100 pt-6 mt-8">
+        <label className="block text-sm font-bold text-slate-700 mb-4 ml-1">What are you interested in doing? (Select multiple)</label>
+        <div className="flex flex-wrap gap-3">
           {TRAVEL_CATEGORIES.map((category) => {
             const isSelected = selectedCategories.includes(category.id);
             return (
@@ -205,13 +208,13 @@ const SearchBar = ({ onSearchResults }) => {
                 key={category.id}
                 type="button"
                 onClick={() => handleCategoryClick(category.id)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm font-medium transition cursor-pointer ${
+                className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl border-2 text-sm font-bold transition-all cursor-pointer select-none active:scale-95 ${
                   isSelected 
                     ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' 
-                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                    : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200 hover:bg-slate-50'
                 }`}
               >
-                <span>{category.icon}</span>
+                <span className="text-lg">{category.icon}</span>
                 <span>{category.name}</span>
               </button>
             );

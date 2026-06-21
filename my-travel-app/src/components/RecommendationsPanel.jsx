@@ -17,7 +17,9 @@ export default function RecommendationsPanel({ recommendations, onAddToTrip }) {
         width: '100%',
         boxSizing: 'border-box',
         textAlign: 'left'
+        textAlign: 'left'
       }} 
+      dir="ltr"
       dir="ltr"
     >
       
@@ -25,12 +27,15 @@ export default function RecommendationsPanel({ recommendations, onAddToTrip }) {
       <div style={{ marginBottom: '15px', borderBottom: '1px solid #fde68a', paddingBottom: '10px' }}>
         <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#78350f', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span>🌟</span> Recommended for you
+          <span>🌟</span> Recommended for you
         </h3>
         <p style={{ fontSize: '12px', color: '#92400e', marginTop: '4px', fontWeight: '500', margin: '4px 0 0 0' }}>
+          Based on your previous trips
           Based on your previous trips
         </p>
       </div>
 
+      {/* Recommended Attractions List */}
       {/* Recommended Attractions List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {recommendations.map(attr => (
@@ -78,6 +83,7 @@ export default function RecommendationsPanel({ recommendations, onAddToTrip }) {
               onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
               onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
             >
+              + Add to Trip
               + Add to Trip
             </button>
             

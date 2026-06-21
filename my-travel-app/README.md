@@ -4,6 +4,12 @@
 Triper is a smart, full-stack web application designed to simplify and elevate the travel planning experience. It allows users to explore worldwide destinations, receive personalized attraction recommendations based on their travel history, and build detailed, conflict-free daily itineraries effortlessly.
 
 ---
+## Project Presentation
+[🔗 View Triper Product Presentation]
+https://docs.google.com/presentation/d/1_sX8HZ8CBJILTH1rqwJHMbCx4A4D55OjUjwv_Mrpvxw/edit?usp=sharing
+
+
+
 
 ## 🛠 Tech Stack
 
