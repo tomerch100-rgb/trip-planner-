@@ -8,6 +8,7 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.17.0",
+    "iso-country-currency": "^0.7.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.17.0",
     "react": "^19.2.7",
@@ -41,6 +42,7 @@
     ]
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.1",
     "autoprefixer": "^10.5.0",
     "postcss": "^8.5.15",
     "tailwindcss": "^3.4.19"

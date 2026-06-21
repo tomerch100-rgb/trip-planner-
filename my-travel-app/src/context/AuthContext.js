@@ -15,24 +15,24 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
         return;
       }
-
-      try {
-        // Send the token to the server for verification
-        // We need an endpoint like this in the Backend, or use an existing endpoint that requires authentication
-        const response = await axios.get('http://localhost:8000/trips/', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        // If we successfully received the trips list, it means the token is valid!
-        // We update the user state in the Context
-        setUser({ authenticated: true }); 
-      } catch (e) {
-        // If the server returned 401, it means the token is invalid
-        localStorage.removeItem('token');
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
+try {
+  // We send the token to the server for verification
+  const response = await axios.get('http://localhost:8000/trips/', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  
+  // If we successfully received the trips list, the token is valid!
+  // Instead of an empty object, let's use the data or decode the token to set a cleaner state
+  if (response.data) {
+    setUser({ authenticated: true, tripsCount: response.data.length }); 
+  }
+} catch (e) {
+  // If the server returned 401, it means the token is invalid
+  localStorage.removeItem('token');
+  setUser(null);
+} finally {
+  setLoading(false);
+}
     };
     verifyToken();
   }, []);

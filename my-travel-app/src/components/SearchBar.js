@@ -66,16 +66,14 @@ const SearchBar = ({ onSearchResults }) => {
     }
   };
 
-  const handleLiveSearch = async () => {
+ const handleLiveSearch = async () => {
     if (!selectedCity) return;
     setLoading(true);
     try {
-      // 🌟 Instead of using the Google types (googleTypes), we extract the human-readable names
       const activeCategoryNames = TRAVEL_CATEGORIES
         .filter(cat => selectedCategories.includes(cat.id))
         .map(cat => cat.name);
 
-      // 🌟 Connect them using " and ", or fallback to generic top attractions if empty
       const categoriesParam = activeCategoryNames.length > 0
         ? activeCategoryNames.join(' and ')
         : 'Top Attractions';
@@ -86,7 +84,11 @@ const SearchBar = ({ onSearchResults }) => {
       const cityName = cityObj ? cityObj.name : "Selected Destination";
 
       if (onSearchResults) {
-        onSearchResults(response.data || [], cityName);
+        // Extract the country code from the first attraction, default to 'US'
+        const fetchedCountryCode = response.data?.[0]?.country_code || 'US';
+        
+        // Pass it as the third parameter
+        onSearchResults(response.data || [], cityName, fetchedCountryCode);
       }
 
     } catch (err) {
@@ -96,7 +98,6 @@ const SearchBar = ({ onSearchResults }) => {
       setLoading(false);
     }
   };
-
   return (
     <div className="bg-white p-8 rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-100 max-w-4xl mx-auto space-y-8 text-left" dir="ltr">
       <div className="space-y-2">
