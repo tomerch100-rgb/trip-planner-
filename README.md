@@ -4,7 +4,8 @@ Welcome to **Triper**, an intelligent full-stack travel planning application des
 
 With live fallback to the Google Places API and real-time currency localization, Triper offers a premium and accurate trip-planning experience.
 
-![Triper Banner](https://via.placeholder.com/1000x300?text=Triper+-+Smart+Travel+Planner) *(Optional: Replace with a real screenshot of your app)*
+![Triper Banner]<img width="1226" height="557" alt="image" src="https://github.com/user-attachments/assets/0aefa055-a36e-4e2a-ab19-4d23c9f52250" />
+
 
 ## ✨ Key Features
 
